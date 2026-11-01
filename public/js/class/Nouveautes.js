@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.65.1",
+    notes: [
+      "Alliance → Membres : les épées de portée encadrent au plus près la valeur du terrain.",
+    ],
+  },
+  {
     version: "1.65.0",
     notes: [
       "Case « Désactiver l'extension » sous le titre de la boîte Extension OUAF : chaque page s'affiche comme sans extension, sans aucun calcul ni requête ; seule la boîte reste, pour la réactiver.",

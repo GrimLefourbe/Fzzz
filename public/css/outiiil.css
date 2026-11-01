@@ -2109,6 +2109,27 @@ html:not(.o_desactivee) #tabMembresAlliance th.o_allCol2 {
 html:not(.o_desactivee) #tabMembresAlliance .o_allRang {
   padding-right: 8px;
 }
+/* épées de portée serrées contre le terrain, chacune dans sa colonne */
+html:not(.o_desactivee) #tabMembresAlliance .o_allEpeeG,
+html:not(.o_desactivee) #tabMembresAlliance .o_allEpeeD {
+  width: 1% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  white-space: nowrap;
+  background-image: none !important;
+}
+html:not(.o_desactivee) #tabMembresAlliance td.o_allEpeeG {
+  text-align: right !important;
+}
+html:not(.o_desactivee) #tabMembresAlliance td.o_allEpeeD {
+  text-align: left !important;
+}
+html:not(.o_desactivee) #tabMembresAlliance td.o_allTerrain {
+  width: 1% !important;
+  white-space: nowrap;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}
 /* épées de portée calculées par l'extension (comptes sans Compte+) */
 .o_epee {
   font-weight: bold;
