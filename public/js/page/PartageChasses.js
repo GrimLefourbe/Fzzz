@@ -791,6 +791,20 @@ class PartageChasses {
     return lignes;
   }
   /**
+   * Sens d'une variation de la chronologie de `pseudo` : « lanceur → cible »
+   * pour un flood, « pseudo → Chasse » pour une chasse (HTML échappé).
+   *
+   * @static
+   * @method sens
+   * @param {Object} v ligne de chronologie
+   * @param {String} pseudo joueur dont c'est la chronologie
+   * @return {String}
+   */
+  static sens(v, pseudo) {
+    let [de, vers] = v.flood ? [v.lanceur, v.cible] : [pseudo, "Chasse"];
+    return `${Utils.echapper(de)} → ${Utils.echapper(vers)}`;
+  }
+  /**
    * Prise signée et colorée, avec la raison quand elle diffère des unités
    * envoyées : « (20 %) » plafonnée, « hors portée », « ~ » estimée au lancement.
    *
@@ -913,13 +927,13 @@ class PartageChasses {
         if (vars.length && terrain > 0) {
           let tdc = terrain,
             lignes = [
-              `<tr class='o_partageEntete'><td></td><td>TdC</td><td>Variation</td><td>Unités</td><td>Avec</td></tr>`,
+              `<tr class='o_partageEntete'><td></td><td>TdC</td><td>Variation</td><td>Unités</td><td>Lanceur → cible</td></tr>`,
               `<tr><td>Actuellement</td><td>${numeral(tdc).format()} cm²</td><td></td><td></td><td></td></tr>`,
             ];
           vars.forEach((v) => {
             tdc += v.delta;
             lignes.push(
-              `<tr><td>${moment(v.date, "YYYY-MM-DD HH:mm").format("DD/MM HH[h]mm")}</td><td>${numeral(tdc).format()} cm²</td><td class='o_partageVariation'>${PartageChasses.libellePrise(v, "")}</td><td class='o_partageVariation'>${v.flood && v.unites != null ? numeral(v.unites).format() : ""}</td><td class='o_allInfoCible'>${Utils.echapper(v.autre)}</td></tr>`,
+              `<tr><td>${moment(v.date, "YYYY-MM-DD HH:mm").format("DD/MM HH[h]mm")}</td><td>${numeral(tdc).format()} cm²</td><td class='o_partageVariation'>${PartageChasses.libellePrise(v, "")}</td><td class='o_partageVariation'>${v.flood && v.unites != null ? numeral(v.unites).format() : ""}</td><td class='o_allInfoCible'>${PartageChasses.sens(v, pseudo)}</td></tr>`,
             );
           });
           synthese =

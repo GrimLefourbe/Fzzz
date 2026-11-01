@@ -125,3 +125,29 @@ describe("PartageChasses.chronologie", () => {
     expect(lignes[0].autre).toBe("A");
   });
 });
+
+describe("chronologie : colonne « Lanceur → cible »", () => {
+  const ligne = (pseudo: string) =>
+    page.lire<{ delta: number; sens: string }>(`(() => {
+      let sim = PartageChasses.simuler(${JSON.stringify({
+        chasses: {},
+        floods: [flood({ lanceur: "Missyl", cible: "DonLapatte", unites: 19083, terrain: 19083 })],
+      })}, { Missyl: 63207, DonLapatte: 95415 }),
+        v = PartageChasses.chronologie(sim, ${JSON.stringify(pseudo)})[0];
+      return { delta: v.delta, sens: PartageChasses.sens(v, ${JSON.stringify(pseudo)}) };
+    })()`);
+
+  test("même sens des deux côtés, signe de la variation inchangé", () => {
+    expect(ligne("Missyl")).toEqual({ delta: 19083, sens: "Missyl → DonLapatte" });
+    expect(ligne("DonLapatte")).toEqual({ delta: -19083, sens: "Missyl → DonLapatte" });
+  });
+
+  test("chasse : « pseudo → Chasse », pseudos échappés", () => {
+    expect(page.lire(`PartageChasses.sens({ flood: false, delta: 100 }, "Grim")`)).toBe(
+      "Grim → Chasse",
+    );
+    expect(page.lire(`PartageChasses.sens({ flood: true, lanceur: "<b>", cible: "B" }, "B")`)).toBe(
+      "&lt;b&gt; → B",
+    );
+  });
+});

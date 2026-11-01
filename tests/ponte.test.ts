@@ -167,3 +167,25 @@ describe("bandeau d'alerte de ponte", () => {
     expect(p.lire(`$("#o_alertePonte").length`)).toBe(0);
   });
 });
+
+describe("réglage « alerte de fin de ponte »", () => {
+  const profil = creerPage(
+    ["js/class/Utils.js", "js/class/Parametre.js", "js/class/Joueur.js"],
+    "var METHODE_FLOOD = [], AFFECTATION_RESSOURCE = [], RATIO_RECOLTE = {};",
+  );
+  const valeur = (stocke: object | null) =>
+    profil.lire(`(() => {
+      localStorage.clear();
+      ${stocke ? `localStorage.setItem("outiiil_parametre", ${JSON.stringify(JSON.stringify(stocke))});` : ""}
+      return new Joueur({ pseudo: "Moi" }).getParametre().parametre["alertePonte"].valeur;
+    })()`);
+
+  test("jamais enregistré : 8 h par défaut", () => {
+    expect(valeur(null)).toBe(6);
+    expect(valeur({ uniteSonde: 1 })).toBe(6);
+  });
+  test("valeur déjà enregistrée : gardée", () => {
+    expect(valeur({ alertePonte: 3 })).toBe(3);
+    expect(valeur({ alertePonte: 0 })).toBe(0);
+  });
+});

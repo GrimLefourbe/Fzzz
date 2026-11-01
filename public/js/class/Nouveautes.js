@@ -9,6 +9,15 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.63.0",
+    notes: [
+      "Mes attaques en cours : tes chasses partagées dans le forum apparaissent avec tes floods, dans l'ordre d'arrivée (heure à la minute).",
+      "Alliance → Membres : la colonne « Avec » de l'évolution du TdC devient « Lanceur → cible » (aussi sur la page d'un membre) ; colonne « Joueur cible » retirée ; épées de portée dans la vue Floods ; tableau resserré pour tenir dans le cadre.",
+      "Messagerie sur téléphone : l'analyse des chasses ne dépasse plus du cadre.",
+      "Alerte de fin de ponte : 8 h par défaut (un réglage déjà enregistré est gardé). Version installée affichée à côté du titre « Extension OUAF ».",
+    ],
+  },
+  {
     version: "1.62.2",
     notes: [
       "Convois → Récapitulatif : le clic sur un montant garde à la fourmilière les ouvrières qui exploitent ton terrain ; le montant est réduit à ce que les autres peuvent porter (un message l'indique).",

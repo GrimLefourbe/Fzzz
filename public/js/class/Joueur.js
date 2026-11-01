@@ -152,7 +152,7 @@ class Joueur {
       "alertePonte",
       "Alerte quand la ponte se termine dans moins de",
       "select",
-      3,
+      6,
       ["Désactivée", "15 min", "30 min", "1 h", "2 h", "4 h", "8 h"],
     );
     this._parametre["affectationRessource"] = new Parametre(

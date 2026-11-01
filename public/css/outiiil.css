@@ -656,6 +656,11 @@ html:not(.o_origineGenerale) #recherche {
 #o_boiteExtension {
   margin-top: 8px;
 }
+.o_versionExtension {
+  font-size: 0.7em;
+  opacity: 0.75;
+  white-space: nowrap;
+}
 /* icônes en ligne, remontées pour loger leur nom dessous */
 #o_toolbarOutiiil {
   display: flex;
@@ -1311,10 +1316,17 @@ html:not(.o_originePage) #tabChoixArmee {
   padding: 2px 12px;
 }
 
-/* Page alliance */
+/* Page alliance : police et marges réduites, le tableau tient dans le cadre du jeu */
+#tabMembresAlliance {
+  font-size: 0.85em;
+}
 #tabMembresAlliance thead th,
 #tabMembresAlliance thead td {
-  padding: 10px;
+  padding: 6px 14px 6px 4px;
+  font-size: 0.9em;
+}
+#tabMembresAlliance tbody td {
+  padding: 3px 4px;
 }
 center > div > #tabMembresAlliance {
   width: calc(100% - 20px);
@@ -1880,6 +1892,45 @@ html:not(.o_originePage) tr.en_tete_message > td.td_coche {
   justify-content: center;
   align-items: center;
 }
+/* écran étroit : l'analyse tient dans le cadre du message (bilan, tableau
+   qui défile dans son cadre, toutou réduit sous le tableau, graphe pleine largeur) */
+@media (max-width: 760px) {
+  .o_analyseRapport .o_analyseContenu {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .o_analyseLigne {
+    display: block;
+    max-width: 100%;
+  }
+  .o_analyseGauche,
+  .o_analyseDroite {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .o_analyseDroite {
+    margin-top: 8px;
+  }
+  .o_bilanCorps {
+    display: block;
+  }
+  .o_bilanChasse .o_bilanEntete {
+    overflow-wrap: anywhere;
+  }
+  .o_analyseRapport .o_bilanTable {
+    max-width: 100%;
+    font-size: 0.85em;
+  }
+  .o_bilanTable td {
+    padding: 0 3px !important;
+  }
+  .o_bilanChien {
+    width: 110px;
+  }
+  .o_bilanChienZone {
+    margin-top: 4px;
+  }
+}
 /* Fzzz : boutons de partage avec l'alliance sous le titre de la messagerie */
 #o_partageAlliance {
   display: flex;
@@ -2039,7 +2090,7 @@ html:not(.o_originePage) tr.en_tete_message > td.td_coche {
 #tabMembresAlliance .o_allCol0,
 #tabMembresAlliance .o_allCol1,
 #tabMembresAlliance .o_allCol2,
-#tabMembresAlliance .o_allCol4 {
+#tabMembresAlliance .o_allCol3 {
   white-space: nowrap;
   /* DataTables fige des largeurs en ligne à l'initialisation : on les écrase */
   width: 1% !important;
@@ -2047,7 +2098,7 @@ html:not(.o_originePage) tr.en_tete_message > td.td_coche {
 #tabMembresAlliance th.o_allCol0,
 #tabMembresAlliance th.o_allCol1,
 #tabMembresAlliance th.o_allCol2,
-#tabMembresAlliance th.o_allCol4 {
+#tabMembresAlliance th.o_allCol3 {
   white-space: normal;
 }
 #tabMembresAlliance .o_allRang {
@@ -2078,7 +2129,7 @@ html:not(.o_originePage) tr.en_tete_message > td.td_coche {
 #tabMembresAlliance.o_allMesure .o_allCol0,
 #tabMembresAlliance.o_allMesure .o_allCol1,
 #tabMembresAlliance.o_allMesure .o_allCol2,
-#tabMembresAlliance.o_allMesure .o_allCol4 {
+#tabMembresAlliance.o_allMesure .o_allCol3 {
   width: auto !important;
 }
 #o_allInfobulle .o_allInfoCible {

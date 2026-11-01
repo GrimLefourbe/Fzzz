@@ -59,7 +59,11 @@ describe("styles de l'extension et affichage d'origine", () => {
     ...[".orange", ".red", ".red_light", ".red_xlight", ".reduce", ".right", ".small"],
     ...[".souligne:hover", ".violet"],
     ...["#tabMembresAlliance", "#tabMembresAlliance td", "#tabMembresAlliance th"],
-    ...["#tabMembresAlliance thead td", "#tabMembresAlliance thead th"],
+    ...[
+      "#tabMembresAlliance thead td",
+      "#tabMembresAlliance thead th",
+      "#tabMembresAlliance tbody td",
+    ],
     ...["#tabMembresAlliance_wrapper", "center > div > #tabMembresAlliance", "#color"],
   ]);
 

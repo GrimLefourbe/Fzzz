@@ -10,7 +10,6 @@ const ALLIANCE_COLONNES_FZZZ = [
   "Prochaine<br/>variation",
   "Unités<br/>envoyées",
   "TdC<br/>(estimé)",
-  "Joueur cible",
   "TdC<br/>final",
 ];
 
@@ -25,7 +24,7 @@ const ALLIANCE_COLONNES_FZZZ = [
  */
 class AllianceFzzz {
   /**
-   * Ajoute les 4 colonnes Fzzz (vides) avant l'initialisation de DataTable.
+   * Ajoute les colonnes Fzzz (vides) avant l'initialisation de DataTable.
    *
    * @static
    * @method colonnes
@@ -40,7 +39,7 @@ class AllianceFzzz {
     $t.find("tbody tr").each((i, tr) => $(tr).find("td:eq(2)").addClass("o_allRang"));
     $t.find("tbody tr").each((i, tr) => {
       $(tr).append(
-        `<td class='o_allVar o_allCol0' data-order='99999999'>…</td><td class='o_allUnites o_allCol1' data-order='0'></td><td class='o_allMontant o_allCol2' data-order='0'></td><td class='o_allCible o_allCol3'></td><td class='o_allFinal o_allCol4' data-order='0'></td>`,
+        `<td class='o_allVar o_allCol0' data-order='99999999'>…</td><td class='o_allUnites o_allCol1' data-order='0'></td><td class='o_allMontant o_allCol2' data-order='0'></td><td class='o_allFinal o_allCol3' data-order='0'></td>`,
       );
     });
     // ligne des totaux (pied fusionné sur toutes les colonnes) déplacée sous le
@@ -74,10 +73,14 @@ class AllianceFzzz {
         api.rows()[0].every((r) => /^\s*\d+\s*$/.test($(api.cell(r, c).node()).text())),
       ),
       autres = [...Array(n).keys()].filter((i) => !fzzz.includes(i) && !trajet.includes(i)),
+      entete = (i) => $(api.column(i).header()).text().trim(),
+      terrain = [...Array(n).keys()].find((i) => entete(i) == "Terrain") ?? 5,
+      // épées de portée du jeu (Compte+) : colonnes sans titre de part et d'autre du terrain
+      epees = [terrain - 1, terrain + 1].filter((i) => i >= 0 && i < n && entete(i).length <= 1),
       vues = {
         trajet: (i) => !fzzz.includes(i) && i !== numero,
         reset: (i) => autres.includes(i) && i !== numero,
-        floods: (i) => [2, 3, 5].includes(i) || fzzz.includes(i),
+        floods: (i) => [2, 3, terrain, ...epees].includes(i) || fzzz.includes(i),
       },
       courante = "reset",
       // partages du forum (une requête par sujet de membre) : lus seulement
@@ -154,6 +157,9 @@ class AllianceFzzz {
         for (let i = 0; i < n; i++) api.column(i).visible(vues[v](i), false);
         max = Math.max(max, $t.outerWidth());
       });
+      // jamais plus large que le cadre de la page : les colonnes se resserrent
+      let cadre = $w.parent().closest("#centre, center, div").innerWidth();
+      if (cadre) max = Math.min(max, cadre);
       $w.css("width", max + "px");
       appliquer(vue);
     };
@@ -226,22 +232,19 @@ class AllianceFzzz {
         .attr("data-order", p ? p.delta : 0)
         .toggleClass("o_allVide", !p)
         .html(p ? PartageChasses.libellePrise(p, "") : "—");
-      cellule(r, n - k + 3)
-        .toggleClass("o_allVide", !p)
-        .html(p ? Utils.echapper(p.autre) : "—");
       cellule(r, n - 1)
         .attr("data-order", final)
         .html(numeral(final).format());
       // infobulle : TdC après chaque variation, comme la synthèse de la page membre
       let tdc = terrain,
         lignes = [
-          `<tr class='gras'><td></td><td>TdC</td><td>Variation</td><td>Unités</td><td>Avec</td></tr>`,
+          `<tr class='gras'><td></td><td>TdC</td><td>Variation</td><td>Unités</td><td>Lanceur → cible</td></tr>`,
           `<tr><td>Actuellement</td><td>${numeral(tdc).format()} cm²</td><td></td><td></td><td></td></tr>`,
         ];
       vars.forEach((v) => {
         tdc += v.delta;
         lignes.push(
-          `<tr><td>${moment(v.date, "YYYY-MM-DD HH:mm").format("DD/MM HH[h]mm")}</td><td>${numeral(tdc).format()} cm²</td><td class='o_partageVariation'>${PartageChasses.libellePrise(v, "")}</td><td class='o_partageVariation'>${v.flood && v.unites != null ? numeral(v.unites).format() : ""}</td><td class='o_allInfoCible'>${Utils.echapper(v.autre)}</td></tr>`,
+          `<tr><td>${moment(v.date, "YYYY-MM-DD HH:mm").format("DD/MM HH[h]mm")}</td><td>${numeral(tdc).format()} cm²</td><td class='o_partageVariation'>${PartageChasses.libellePrise(v, "")}</td><td class='o_partageVariation'>${v.flood && v.unites != null ? numeral(v.unites).format() : ""}</td><td class='o_allInfoCible'>${PartageChasses.sens(v, pseudo)}</td></tr>`,
         );
       });
       let html = `<div class='gras'>${Utils.echapper(pseudo)}</div>${

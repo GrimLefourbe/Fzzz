@@ -388,6 +388,102 @@ class AttaqueLancee {
     });
     return listeAttaque;
   }
+  static get ENTETE() {
+    return `<thead><tr><th>#</th><th>Arrivée</th><th>Cible</th><th>Unités</th><th>Lieu</th><th title="Estimé : au plus 20 % du TdC de la cible à l'impact, d'après le TdC connu au lancement et tes attaques précédentes sur elle">TdC pris</th><th></th></tr></thead>`;
+  }
+  /**
+   * Bloc « Mes attaques en cours » en haut de la page : sous le menu du jeu
+   * (dans #centre), épinglé ; à défaut en tête de #centre.
+   *
+   * @static
+   * @method placer
+   */
+  static placer($bloc) {
+    let $menu = $("#centre > #menu");
+    if ($menu.length) {
+      $bloc.insertAfter($menu);
+      AttaqueLancee.epingler($bloc[0]);
+      // bandeau de ponte déjà affiché : il passe sous le bloc
+      $("#o_alertePonte").insertAfter($bloc);
+      $(window).trigger("resize");
+    } else $bloc.prependTo("#centre");
+  }
+  /**
+   * Mes chasses à venir partagées dans le forum ({date "AAAA-MM-JJ HH:mm",
+   * terrain}), dans l'ordre. Le forum n'est lu que si le repère local annonce
+   * une chasse partagée encore à venir (ou n'est pas encore connu).
+   *
+   * @static
+   * @method chassesPartagees
+   * @return {Promise<Array>}
+   */
+  static chassesPartagees() {
+    let maintenant = Horloge.serveur().format("YYYY-MM-DD HH:mm"),
+      pseudo = monProfil.pseudo,
+      fin = null;
+    try {
+      fin = localStorage.getItem(CLE_FIN_CHASSES_PARTAGEES);
+    } catch (e) {}
+    if (!pseudo || (fin != null && fin < maintenant)) return Promise.resolve([]);
+    return PartageChasses.enFile(() =>
+      PartageChasses.sujets().then((sujets) => {
+        let idSujet = sujets[`Chasses | ${pseudo.toLowerCase()}`];
+        return idSujet ? PartageChasses.lireSujet(idSujet).then((d) => d.chasses) : [];
+      }),
+    )
+      .then((chasses) => {
+        let aVenir = chasses
+          .filter((c) => c.date >= maintenant)
+          .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+        try {
+          localStorage.setItem(
+            CLE_FIN_CHASSES_PARTAGEES,
+            aVenir.length ? aVenir[aVenir.length - 1].date : "-",
+          );
+        } catch (e) {}
+        return aVenir;
+      })
+      .catch(() => []);
+  }
+  /**
+   * Ajoute les chasses partagées au tableau, à leur place dans l'ordre
+   * d'arrivée, sans boutons (le forum n'a ni leur numéro ni leurs troupes).
+   *
+   * @static
+   * @method insererChasses
+   * @param {jQuery} $bloc bloc « Mes attaques en cours »
+   * @param {Array} chasses voir chassesPartagees
+   * @param {Integer} nbFloods
+   */
+  static insererChasses($bloc, chasses, nbFloods) {
+    if (!chasses.length) return;
+    let $corps = $bloc.find("table.o_attaquesLancees tbody");
+    chasses.forEach((c) => {
+      let impact = moment(c.date, "YYYY-MM-DD HH:mm"),
+        $tr = $(
+          `<tr class="o_ligneChasse" data-arrivee="${impact.valueOf()}" title="Chasse partagée dans le forum de l'alliance (heure à la minute)"><td></td>
+          <td>${impact.format("DD/MM HH[h]mm")}</td><td>Chasse</td><td>—</td><td>TdC</td>
+          <td class="o_priseAttaque"><span class="green">+${numeral(c.terrain).format()}</span></td>
+          <td class="o_attaqueActions"><span class="small">partagée</span></td></tr>`,
+        ),
+        // une chasse à la minute M arrive au plus tôt à M:00
+        $apres = $corps
+          .children("tr")
+          .filter((i, tr) => Number(tr.dataset.arrivee) > impact.valueOf())
+          .first();
+      if ($apres.length) $tr.insertBefore($apres);
+      else $tr.appendTo($corps);
+    });
+    $corps.children("tr").each((i, tr) => {
+      $(tr).toggleClass("ligne_paire", i % 2 == 1);
+      tr.cells[0].textContent = String(i + 1);
+    });
+    $bloc
+      .find(".o_attaquesCompte")
+      .text(
+        `(${nbFloods ? nbFloods + " + " : ""}${chasses.length} chasse${chasses.length > 1 ? "s" : ""})`,
+      );
+  }
   /**
    * Un tableau récapitulatif par cible : lieu, troupes, temps restant,
    * arrivée, terrain estimé, annulation unitaire ou groupée, et copie au
@@ -418,7 +514,25 @@ class AttaqueLancee {
         }));
     AttaqueLancee.partagerMarquees();
     // les captures restent synchronisées (partage des floods) même sans la liste
-    if (!attaques.length || !Utils.affichage("listeAttaques")) return;
+    if (!Utils.affichage("listeAttaques")) return;
+    if (!attaques.length) {
+      AttaqueLancee.chassesPartagees().then((chasses) => {
+        if (!chasses.length) return;
+        let $bloc = $(
+          `<div id="o_attaquesLancees" class="boite_amelioration simulateur centre o_blocAttaques">` +
+            Utils.spoiler(
+              `Mes attaques en cours <span class="o_attaquesCompte"></span>`,
+              `<table class="o_attaquesLancees o_maxWidth centre" cellspacing="0">${AttaqueLancee.ENTETE}<tbody></tbody></table>`,
+              "attaquesEnCours",
+              "o_attaquesTitre",
+            ) +
+            "</div>",
+        );
+        AttaqueLancee.placer($bloc);
+        AttaqueLancee.insererChasses($bloc, chasses, 0);
+      });
+      return;
+    }
     // Fzzz : une seule liste, dans l'ordre d'arrivée : # | Arrivée | Cible (tag
     // coloré) | Troupes (quantité, détail au survol) | Lieu | Copier | Partager
     let id = "o_attaquesLancees",
@@ -427,10 +541,10 @@ class AttaqueLancee {
     let annulables = attaques.filter((a) => a.annuler.length),
       // type="button" : un <button> nu soumettrait un formulaire englobant
       html = `<table class="o_attaquesLancees o_maxWidth centre" cellspacing="0">
-        <thead><tr><th>#</th><th>Arrivée</th><th>Cible</th><th>Unités</th><th>Lieu</th><th title="Estimé : au plus 20 % du TdC de la cible à l'impact, d'après le TdC connu au lancement et tes attaques précédentes sur elle">TdC pris</th><th></th></tr></thead>
+        ${AttaqueLancee.ENTETE}
         <tbody>`;
     attaques.forEach((a, i) => {
-      html += `<tr${i % 2 ? " class='ligne_paire'" : ""}><td>${i + 1}</td>
+      html += `<tr data-arrivee="${a.ligne.arrivee.valueOf()}"${i % 2 ? " class='ligne_paire'" : ""}><td>${i + 1}</td>
         ${
           a.ligne.incertaine
             ? `<td class="o_arriveeIncertaine" title="Heure du jeu, à la minute : l'horloge de ce navigateur est décalée (mise en veille, cache). Recharge la page pour retrouver les secondes.">${a.ligne.arrivee.format("DD/MM HH[h]mm")}</td>`
@@ -455,23 +569,18 @@ class AttaqueLancee {
     let $bloc = $(
       `<div id="${id}" class="boite_amelioration simulateur centre o_blocAttaques">` +
         Utils.spoiler(
-          `Mes attaques en cours (${attaques.length})${boutons}`,
+          `Mes attaques en cours <span class="o_attaquesCompte">(${attaques.length})</span>${boutons}`,
           html,
           "attaquesEnCours",
           "o_attaquesTitre",
         ) +
         "</div>",
     );
-    // le menu du jeu est dans #centre : juste sous le menu, toujours visible
-    let $menu = $("#centre > #menu");
-    if ($menu.length) {
-      $bloc.insertAfter($menu);
-      AttaqueLancee.epingler($bloc[0]);
-      // bandeau de ponte déjà affiché : il passe sous le bloc
-      $("#o_alertePonte").insertAfter($bloc);
-      $(window).trigger("resize");
-    } else $bloc.prependTo("#centre");
+    AttaqueLancee.placer($bloc);
     AttaqueLancee.colorerTags($(`#${id}`));
+    AttaqueLancee.chassesPartagees().then((chasses) =>
+      AttaqueLancee.insererChasses($bloc, chasses, attaques.length),
+    );
     // un clic sur ces boutons ne replie pas l'encart (titre cliquable)
     $(`#${id} .o_attaquesEnTete`).on("click", (e) => e.stopPropagation());
     // lien Annuler du jeu copié dans le tableau. Pour une attaque capturée on

@@ -15,7 +15,7 @@ class Dock {
      */
     // encadré « Extension OUAF », même style que l'encadré Compte+ du jeu
     this._html = `<div id="o_boiteExtension" class="boite_compte_plus">
-            <div class="titre_colonne_cliquable"><span class="titre_compte_plus">Extension OUAF</span></div>
+            <div class="titre_colonne_cliquable"><span class="titre_compte_plus">Extension OUAF</span> <span class="o_versionExtension" title="Version installée">v${VERSION}</span></div>
             <div class="contenu_boite_compte_plus"><div id="o_toolbarOutiiil">
             ${[
               ["o_toolbarItem6", "o_itemParametre", "Préférences"],
