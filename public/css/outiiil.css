@@ -2625,3 +2625,12 @@ html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
   opacity: 0.4;
   pointer-events: none;
 }
+
+/* page Ennemies : filtre de la liste sous l'encadré « Cibles » */
+#o_filtreEnnemis input {
+  width: 14em;
+  max-width: 100%;
+}
+#o_filtreEnnemisCompte {
+  margin-left: 6px;
+}

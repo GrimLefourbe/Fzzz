@@ -36,6 +36,62 @@ class PageAttaquer {
   /**
    *
    */
+  /**
+   * Page Ennemies (ennemie.php) : champ sous l'encadré « Cibles » qui filtre,
+   * pendant la frappe, la liste affichée (pseudo ou alliance, plusieurs termes
+   * séparés par « ; »). Aucune requête : seule la page de résultats affichée.
+   *
+   * @static
+   * @method ajouterFiltreEnnemis
+   */
+  static ajouterFiltreEnnemis() {
+    let $cibles = $("#formulairePageEnnemie fieldset")
+      .filter((i, f) => $(f).children("legend").text().trim() == "Cibles")
+      .first();
+    if (!$cibles.length || !$("#tabEnnemie").length || $("#o_filtreEnnemis").length) return;
+    let $bloc =
+      $(`<fieldset id="o_filtreEnnemis"><legend><h2 style="display:inline">Filtrer la liste</h2></legend>
+        <input type="text" id="o_filtreEnnemisTexte" placeholder="Pseudo ou alliance (Sam;Max)" autocomplete="off"/>
+        <span id="o_filtreEnnemisCompte" class="small"></span></fieldset>`).insertAfter($cibles);
+    $bloc
+      .find("#o_filtreEnnemisTexte")
+      // champ dans le formulaire de recherche du jeu : Entrée ne doit pas le soumettre
+      .on("keydown", (e) => {
+        if (e.key == "Enter") e.preventDefault();
+      })
+      .on("input", (e) => {
+        let { visibles, total } = PageAttaquer.filtrerEnnemis(e.currentTarget.value);
+        $("#o_filtreEnnemisCompte").text(
+          e.currentTarget.value.trim() ? `${visibles} / ${total}` : "",
+        );
+      });
+  }
+  /**
+   * Masque les lignes de #tabEnnemie dont ni l'alliance ni le pseudo ne
+   * contient l'un des termes (casse ignorée).
+   *
+   * @static
+   * @method filtrerEnnemis
+   * @param {String} texte termes séparés par « ; » (vide : tout afficher)
+   * @return {{visibles: Number, total: Number}}
+   */
+  static filtrerEnnemis(texte) {
+    let termes = String(texte)
+        .toLowerCase()
+        .split(";")
+        .map((t) => t.trim())
+        .filter(Boolean),
+      $lignes = $("#tabEnnemie tr").filter((i, tr) => $(tr).children("td").length > 0),
+      visibles = 0;
+    $lignes.each((i, tr) => {
+      let cellules = $(tr).children("td"),
+        nom = (cellules.eq(0).text() + " " + cellules.eq(1).text()).toLowerCase(),
+        garder = !termes.length || termes.some((t) => nom.includes(t));
+      $(tr).toggle(garder);
+      if (garder) visibles++;
+    });
+    return { visibles, total: $lignes.length };
+  }
   executer() {
     if ($("#tabChoixArmee").length) {
       // récupération de l'armée
