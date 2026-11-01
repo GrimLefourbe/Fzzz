@@ -294,19 +294,13 @@ const IMG_DROITE =
 const IMG_COPY =
   "<img src='images/icone/feuille.gif' class='cliquable' title='Copier/Coller une armée' style='position:relative;top:3px' width='14' height='17'>";
 // Image pour l'extension
-const IMG_CHANGE = chrome.runtime.getURL("images/change.png");
 const IMG_ACTUALISER = chrome.runtime.getURL("images/actualize_on_01.png");
-const IMG_CRAYON = chrome.runtime.getURL("images/crayon.gif");
-const IMG_CROIX = chrome.runtime.getURL("images/croix.png");
 const IMG_COPIER = chrome.runtime.getURL("images/copy.png");
 const IMG_HISTORIQUE = chrome.runtime.getURL("images/historique.png");
-const IMG_LIVRAISON = chrome.runtime.getURL("images/livraison.png");
 const IMG_RADAR = chrome.runtime.getURL("images/radar.png");
 const IMG_SPRITE_MENU = chrome.runtime.getURL("images/sprite_menu.png");
-const IMG_UTILITY = chrome.runtime.getURL("images/utility.png");
 const IMG_DOWN = chrome.runtime.getURL("images/down.png");
 const IMG_UP = chrome.runtime.getURL("images/up.png");
-const IMG_TOOLZZZ = chrome.runtime.getURL("images/toolzzz.png");
 
 const TOAST_ERROR = {
   heading: "Erreur",

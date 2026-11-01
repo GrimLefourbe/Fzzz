@@ -115,3 +115,49 @@ describe("envoi direct depuis le formulaire du jeu (page rechargée)", () => {
     expect(captures().map((c) => c.id)).toEqual([801, null]);
   });
 });
+
+describe("envoi refusé par le jeu entre deux floods réussis", () => {
+  const vieillir = () =>
+    page.lire(
+      `localStorage.setItem("outiiil_attaquesLancees", JSON.stringify(AttaqueLancee.charger().map((a) => ({ ...a, lancee: a.lancee - 10000 }))))`,
+    );
+  const synchroniser = (lignes: { id: number; cible: string; s: number }[]) =>
+    page.lire(
+      `AttaqueLancee.synchroniser(AttaqueLancee.extraireLignes(Utils.parseHtml(${JSON.stringify(reponse(lignes))}))).map((a) => [a.id, a.terrainDepart, a.terrainCible])`,
+    );
+
+  test("la capture refusée est retirée et rend sa prise : le flood suivant repart du bon TdC", () => {
+    page.lire(`localStorage.clear()`);
+    page.lire(
+      `AttaqueLancee.enregistrer("Canaille", "Terrain de chasse", { JSN: 5000 }, { terrain: 100000 })`,
+    );
+    synchroniser([{ id: 801, cible: "Canaille", s: 4000 }]);
+    // envoi refusé : la page suivante ne montre pas de nouvelle attaque
+    page.lire(
+      `AttaqueLancee.enregistrer("Canaille", "Terrain de chasse", { JSN: 5000 }, { terrain: 100000 })`,
+    );
+    vieillir();
+    expect(synchroniser([{ id: 801, cible: "Canaille", s: 3990 }])).toEqual([[801, 100000, 95000]]);
+    page.lire(
+      `AttaqueLancee.enregistrer("Canaille", "Terrain de chasse", { JSN: 5000 }, { terrain: 100000 })`,
+    );
+    expect(
+      synchroniser([
+        { id: 801, cible: "Canaille", s: 3980 },
+        { id: 802, cible: "Canaille", s: 4100 },
+      ]),
+    ).toEqual([
+      [801, 100000, 95000],
+      [802, 95000, 90000],
+    ]);
+  });
+
+  test("page relue peut-être hors du jeu (retirer = false) : la capture est gardée", () => {
+    page.lire(`localStorage.clear()`);
+    page.lire(
+      `AttaqueLancee.enregistrer("Canaille", "Terrain de chasse", { JSN: 5000 }, { terrain: 100000 })`,
+    );
+    vieillir();
+    expect(page.lire(`AttaqueLancee.synchroniser([], false).map((a) => a.id)`)).toEqual([null]);
+  });
+});

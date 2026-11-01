@@ -24,6 +24,8 @@ const CLE_ATTAQUES_LANCEES = "outiiil_attaquesLancees";
 // délai (s) au-delà duquel une capture jamais retrouvée dans la liste du jeu
 // est abandonnée (envoi refusé par le serveur, page jamais rechargée…)
 const DUREE_VIE_CAPTURE = 600;
+// délai (s) après l'envoi au-delà duquel une capture toujours sans ligne est un envoi refusé
+const MARGE_REFUS = 5;
 // fenêtre (s) pendant laquelle le jeu accepte d'annuler une attaque après son lancement
 const DELAI_ANNULATION = 120;
 // nombre d'attaques qu'un « Tout annuler » n'a pas pu annuler, affiché après rechargement
@@ -312,9 +314,15 @@ class AttaqueLancee {
       modifie = AttaqueLancee.lier(liste, lignes),
       // les pages qui listent les attaques en cours les listent toutes : une
       // capture liée dont la ligne a disparu correspond à une attaque annulée.
-      annulees = liste.filter((a) => a.id && !lignes.some((l) => l.id == a.id));
+      annulees = liste.filter((a) => a.id && !lignes.some((l) => l.id == a.id)),
+      // envoi refusé par le jeu (troupes insuffisantes…) : aucune ligne ne l'a
+      // lié sur une page chargée après lui ; la marge couvre une page d'un
+      // autre onglet servie avant que le jeu n'enregistre l'envoi
+      refusees = retirer
+        ? liste.filter((a) => !a.id && a.lancee < Date.now() - MARGE_REFUS * 1000)
+        : [];
     // Elle rend le terrain qu'elle aurait pris aux attaques lancées après elle.
-    annulees.forEach((annulee) => {
+    [...annulees, ...refusees].forEach((annulee) => {
       let prise = annulee.terrainDepart - annulee.terrainCible;
       if (prise > 0)
         liste
@@ -324,7 +332,7 @@ class AttaqueLancee {
           .forEach((a) => (a.terrainDepart += prise));
       modifie = true;
     });
-    liste = liste.filter((a) => !a.id || lignes.some((l) => l.id == a.id));
+    liste = liste.filter((a) => (a.id ? lignes.some((l) => l.id == a.id) : !refusees.includes(a)));
     // arrivée capturée avec une horloge décalée : celle de la page la remplace
     liste.forEach((a) => {
       let l = a.id && lignes.find((x) => x.id == a.id);

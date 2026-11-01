@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.63.1",
+    notes: [
+      "Mes attaques en cours : un envoi refusé par le jeu (troupes insuffisantes…) n'est plus compté dans le TdC estimé des floods suivants sur la même cible.",
+    ],
+  },
+  {
     version: "1.63.0",
     notes: [
       "Mes attaques en cours : tes chasses partagées dans le forum apparaissent avec tes floods, dans l'ordre d'arrivée (heure à la minute).",
