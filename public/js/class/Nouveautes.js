@@ -9,6 +9,10 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.66.2",
+    notes: ["Bouton « Mettre à jour l'extension » déplacé dans Préférences → Général."],
+  },
+  {
     version: "1.66.1",
     notes: [
       "Alliance → Membres, vue Floods : rang, pseudo et terrain au plus juste, les colonnes Prochaine variation, TdC (estimé) et TdC final se partagent la place restante.",

@@ -240,7 +240,14 @@ class BoiteParametre extends Boite {
         ${this.cases("General")}
         <p class='o_titreParam'>Ponte</p>
         ${p["alertePonte"].getForm("Alerte si la ponte finit dans moins de")}
-      </form>`);
+      </form>
+      <p class='o_titreParam'>Mise à jour (v${VERSION})</p>
+      <p class='left'><button type='button' id='o_majFzzz' class='o_button f_success'>Mettre à jour l'extension</button></p>
+      <p id='o_majFzzzEtat' class='left small'></p>`);
+    $("#o_majFzzz").on("click", (e) => {
+      e.preventDefault();
+      BoiteParametre.mettreAJour($(e.currentTarget), $("#o_majFzzzEtat"));
+    });
     return this;
   }
   /**
@@ -415,8 +422,6 @@ class BoiteParametre extends Boite {
     $("#o_tabsParametreApropos").append(`
       <p class='o_titreParam'>${NOM_EXTENSION} v${VERSION}</p>
       <p class='left reduce'>Extension open source pour Fourmizzz.fr.</p>
-      <p class='left'><button type='button' id='o_majFzzz' class='o_button f_success'>Mettre à jour l'extension</button></p>
-      <p id='o_majFzzzEtat' class='left small'></p>
       <ul class='left reduce'>
         <li><a href='https://github.com/GuiEpi/toolzzz/wiki' target='_blank' rel='noopener'>Wiki (Toolzzz)</a></li>
         <li><a href='${repo}' target='_blank' rel='noopener'>Code source (GitHub)</a></li>
@@ -429,10 +434,6 @@ class BoiteParametre extends Boite {
       <p class='left small'><em>Remet toutes les options (dock, flood, antisondes, signalement de l'armée à replacer, etc.) aux valeurs par défaut. La page sera rechargée.</em></p>
       <button id='o_resetParametres' class='o_button f_error'>Réinitialiser</button>
     `);
-    $("#o_majFzzz").on("click", (e) => {
-      e.preventDefault();
-      BoiteParametre.mettreAJour($(e.currentTarget), $("#o_majFzzzEtat"));
-    });
     return this;
   }
   /**
