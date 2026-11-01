@@ -12,6 +12,20 @@ Fzzz (shown to players as « Extension OUAF » since 1.41: `NOM_EXTENSION` / `TI
 
 All user-facing strings are in French (game domain vocabulary: ponte, chasse, convoi, alliance, etc.).
 
+### Maintainer vocabulary
+
+The maintainer describes changes with these words (full guide: the « Lexique Extension OUAF » page shared with him):
+
+- **page** = a game URL (`commerce.php` = Convois, `alliance.php?Membres` = Membres de l'alliance, `Membre.php?Pseudo=…` = page d'un membre); « page membre » is ambiguous, ask which one.
+- **bloc** = a bordered box with a title, from the game (« Convoi ») or the extension (« Récapitulatif », « Mes attaques en cours », pinned under the menu); **titre de bloc** = its title, quoted exactly.
+- **bandeau** = a full-width alert line (ponte alert); the maintainer may also say it for a bloc or for table rows, so check.
+- **cadre de la page** = the beige central area; « dépasse du cadre » = overflows it to the right.
+- **vues** = the buttons switching a table's columns (Standard / Temps de trajet / Floods et chasses en cours).
+- **info-bulle** = shown on hover (or tap on phone); **notification** / toast = message that disappears by itself; « pop-up » is ambiguous.
+- **encart « S5 Pseudo »**, **encart Compte +**, **boîte « Extension OUAF »** = the left column boxes; **Préférences** = the settings window and its tabs.
+- **Lanceur → cible** = direction of a flood (same text on both players' timelines; the sign and colour of the variation do not change).
+- When the place or the expected effect is unclear, ask for: page, bloc, element, what happens (click, hover, load), and what must not change. Never infer « comme avant » without checking what « avant » did.
+
 ## Commands
 
 ```bash
