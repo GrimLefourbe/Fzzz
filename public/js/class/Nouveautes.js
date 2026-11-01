@@ -9,6 +9,10 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.66.3",
+    notes: ["Page Ennemies : « Filtrer la liste » placé juste sous l'encadré Cibles."],
+  },
+  {
     version: "1.66.2",
     notes: ["Bouton « Mettre à jour l'extension » déplacé dans Préférences → Général."],
   },
