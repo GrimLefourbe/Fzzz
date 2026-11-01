@@ -84,6 +84,7 @@ class AllianceFzzz {
       appliquer = (vue) => {
         courante = vue;
         for (let i = 0; i < n; i++) api.column(i).visible(vues[vue](i), false);
+        $("#tabMembresAlliance").toggleClass("o_allVueFloods", vue == "floods");
         api.columns.adjust().draw(false);
         $(".o_allVue").removeClass("o_allVueActive");
         $(`.o_allVue[data-vue='${vue}']`).addClass("o_allVueActive");

@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.66.1",
+    notes: [
+      "Alliance → Membres, vue Floods : rang, pseudo et terrain au plus juste, les colonnes Prochaine variation, TdC (estimé) et TdC final se partagent la place restante.",
+    ],
+  },
+  {
     version: "1.66.0",
     notes: [
       "Page Ennemies : champ « Filtrer la liste » sous l'encadré Cibles, qui ne garde que les fourmilières dont le pseudo ou l'alliance contient le texte tapé (plusieurs termes séparés par « ; »).",

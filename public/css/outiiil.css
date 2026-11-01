@@ -2109,6 +2109,17 @@ html:not(.o_desactivee) #tabMembresAlliance th.o_allCol2 {
 html:not(.o_desactivee) #tabMembresAlliance .o_allRang {
   padding-right: 8px;
 }
+/* vue Floods : rang, pseudo et terrain au plus juste, les colonnes de
+   l'extension se partagent la place restante */
+html:not(.o_desactivee) #tabMembresAlliance.o_allVueFloods .o_allPseudo {
+  width: 1% !important;
+  white-space: nowrap;
+}
+html:not(.o_desactivee) #tabMembresAlliance.o_allVueFloods .o_allCol0,
+html:not(.o_desactivee) #tabMembresAlliance.o_allVueFloods .o_allCol1,
+html:not(.o_desactivee) #tabMembresAlliance.o_allVueFloods .o_allCol2 {
+  width: auto !important;
+}
 /* épées de portée serrées contre le terrain, chacune dans sa colonne */
 html:not(.o_desactivee) #tabMembresAlliance .o_allEpeeG,
 html:not(.o_desactivee) #tabMembresAlliance .o_allEpeeD {

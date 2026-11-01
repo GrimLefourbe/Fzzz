@@ -89,6 +89,7 @@ class PageAlliance {
       });
       this._gradesNatifs[pseudo] = tmpJoueurs[pseudo].rang;
       Joueur.epeesPortee(tmpJoueurs[pseudo], $(elt).find("td:eq(4)"), $(elt).find("td:eq(6)"));
+      $(elt).find("td:eq(3)").addClass("o_allPseudo");
       $(elt).find("td:eq(4)").addClass("o_allEpeeG");
       $(elt).find("td:eq(5)").addClass("o_allTerrain");
       $(elt).find("td:eq(6)").addClass("o_allEpeeD");
@@ -109,7 +110,7 @@ class PageAlliance {
     );
     $("#tabMembresAlliance tr:first").remove();
     $("#tabMembresAlliance").prepend(
-      `<thead><tr class='alt'><th></th><th></th><th>Rang</th><th>Pseudo</th><th class='o_allEpeeG'></th><th class='o_allTerrain'>Terrain</th><th class='o_allEpeeD'></th><th><span style='padding-right:10px'>Technologie</span></th><th><span style='padding-right:10px'>Fourmiliere</span></th><th colspan='2'>Etat</th><th></th></tr></thead>`,
+      `<thead><tr class='alt'><th></th><th></th><th>Rang</th><th class='o_allPseudo'>Pseudo</th><th class='o_allEpeeG'></th><th class='o_allTerrain'>Terrain</th><th class='o_allEpeeD'></th><th><span style='padding-right:10px'>Technologie</span></th><th><span style='padding-right:10px'>Fourmiliere</span></th><th colspan='2'>Etat</th><th></th></tr></thead>`,
     );
 
     this.tableauAvecCarteCache();
