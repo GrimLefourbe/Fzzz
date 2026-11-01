@@ -14,7 +14,7 @@ All user-facing strings are in French (game domain vocabulary: ponte, chasse, co
 
 ### Maintainer vocabulary
 
-The maintainer describes changes with these words (full guide: the « Lexique Extension OUAF » page shared with him):
+The maintainer describes changes with these words (full guide: the « Lexique Extension OUAF » page shared with the maintainer):
 
 - **page** = a game URL (`commerce.php` = Convois, `alliance.php?Membres` = Membres de l'alliance, `Membre.php?Pseudo=…` = page d'un membre); « page membre » is ambiguous, ask which one.
 - **bloc** = a bordered box with a title, from the game (« Convoi ») or the extension (« Récapitulatif », « Mes attaques en cours », pinned under the menu); **titre de bloc** = its title, quoted exactly.
