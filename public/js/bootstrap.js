@@ -62,16 +62,20 @@
     [/^\/commerce\.php$/i, "Convois"],
     [/^\/membre\.php$/i, "Membre"],
   ];
-  let origine = (onglet) => {
+  let lire = (cle) => {
       try {
-        return localStorage.getItem("fzzz_origine_" + onglet) == "1";
+        return localStorage.getItem(cle) == "1";
       } catch (e) {
         return false;
       }
     },
+    origine = (onglet) => lire("fzzz_origine_" + onglet),
+    // « Désactiver l'extension » (boîte Extension OUAF) : toute la page comme le jeu
+    desactivee = lire("fzzz_desactivee"),
     ongletPage = ONGLET_PAGE.find(([re]) => re.test(location.pathname)),
-    originePage = !!ongletPage && origine(ongletPage[1]);
-  document.documentElement.classList.toggle("o_origineGenerale", origine("General"));
+    originePage = desactivee || (!!ongletPage && origine(ongletPage[1]));
+  document.documentElement.classList.toggle("o_desactivee", desactivee);
+  document.documentElement.classList.toggle("o_origineGenerale", desactivee || origine("General"));
   document.documentElement.classList.toggle("o_originePage", originePage);
   let appliquer = () => {
     if (originePage) return;
@@ -92,7 +96,7 @@
   // par la même adresse lui fait oublier les données envoyées ; actualiser
   // recharge alors simplement la page.
   try {
-    history.replaceState(history.state, "", location.href);
+    if (!desactivee) history.replaceState(history.state, "", location.href);
   } catch (e) {
     /* historique inaccessible : comportement du navigateur inchangé */
   }

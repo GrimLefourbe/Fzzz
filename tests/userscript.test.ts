@@ -88,6 +88,7 @@ describe("couche GM (userscript/shim.js)", () => {
       GM_info: {
         script: {
           version: "9.9.9",
+          downloadURL: "https://raw.test/fzzz.user.js",
           resources: [
             { name: "fzzzBase", url: "https://cdn.test/gh/x@abc/public/ouaf-autorisation.html" },
           ],
@@ -123,10 +124,11 @@ describe("couche GM (userscript/shim.js)", () => {
     expect(await chrome.storage.local.get("a")).toEqual({});
   });
 
-  test("messages : mise à jour gérée par le gestionnaire, API OUAF seulement", async () => {
+  test("messages : mise à jour par l'adresse du script, API OUAF seulement", async () => {
     const chrome = charger();
     expect(await chrome.runtime.sendMessage({ type: "fzzz_majVerifier" })).toEqual({
       statut: "userscript",
+      url: "https://raw.test/fzzz.user.js",
     });
     expect(
       await chrome.runtime.sendMessage({

@@ -9,6 +9,9 @@
  * Laboratoire). `affichages` : clés de AFFICHAGES_FZZZ / AFFICHAGES_CONVOIS ;
  * un affichage présent sur deux pages figure dans les deux onglets.
  */
+// dernière version publiée du script utilisateur (si le gestionnaire ne donne pas son adresse)
+const SCRIPT_UTILISATEUR =
+  "https://raw.githubusercontent.com/NumeroBis-boop/Fzzz/main/fzzz.user.js";
 const ONGLETS_PARAMETRE = [
   {
     id: "General",
@@ -461,11 +464,14 @@ class BoiteParametre extends Boite {
         if (r.statut == "no_update") $etat.text(`${NOM_EXTENSION} est à jour (v${VERSION}).`);
         else if (r.statut == "throttled")
           $etat.text("Trop de vérifications rapprochées : réessaie dans quelques minutes.");
-        else if (r.statut == "userscript")
+        else if (r.statut == "userscript") {
+          // le gestionnaire de scripts intercepte l'ouverture d'un .user.js et
+          // propose d'installer la version publiée
+          window.open(r.url || SCRIPT_UTILISATEUR, "_blank", "noopener");
           $etat.text(
-            "Version script utilisateur : Tampermonkey ou Violentmonkey vérifie les mises à jour (menu du gestionnaire → « Rechercher des mises à jour »).",
+            "La dernière version du script s'ouvre : clique sur « Installer » (ou « Mettre à jour ») dans Violentmonkey ou Tampermonkey, puis recharge la page du jeu.",
           );
-        else if (r.statut == "non_supporte") {
+        } else if (r.statut == "non_supporte") {
           // Firefox : il propose d'installer le .xpi ouvert (autoriser puis « Ajouter »)
           window.open(xpi, "_blank", "noopener");
           $etat.html(

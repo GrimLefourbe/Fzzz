@@ -389,6 +389,11 @@ const DATEPICKER_OPTION = {
   const debutExtension = performance.now();
   // si l'utilisateur est identifié
   if ($(".boite_connexion_titre:first").text() != "Connexion") {
+    // extension désactivée : seule la boîte « Extension OUAF » (pour la réactiver)
+    if (document.documentElement.classList.contains("o_desactivee")) {
+      new Dock(true).afficher();
+      return;
+    }
     // Modification du theme jquery humanity
     // Fzzz : thème jQuery UI « humanity » embarqué (paquet npm jquery-ui-themes 1.12.0,
     // MIT) au lieu de code.jquery.com : aucune requête vers un site tiers. Il

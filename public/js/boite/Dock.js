@@ -1,5 +1,7 @@
 // écart vertical (px) entre les encadrés « S5 pseudo », Compte+ et Extension OUAF
 const ECART_ENCADRES = 6;
+// « Désactiver l'extension » : lu aussi par bootstrap.js, avant l'affichage
+const CLE_DESACTIVEE = "fzzz_desactivee";
 
 /**
  * Classe pour la gestion des différents outils globals à fourmizzz.
@@ -9,36 +11,34 @@ const ECART_ENCADRES = 6;
  * @extends Boite
  */
 class Dock {
-  constructor() {
-    /**
-     *
-     */
+  /**
+   * @param {Boolean} desactivee extension désactivée : titre et case seulement
+   */
+  constructor(desactivee = false) {
+    this._desactivee = desactivee;
     // encadré « Extension OUAF », même style que l'encadré Compte+ du jeu
     this._html = `<div id="o_boiteExtension" class="boite_compte_plus">
             <div class="titre_colonne_cliquable"><span class="titre_compte_plus">Extension OUAF</span> <span class="o_versionExtension" title="Version installée">v${VERSION}</span></div>
-            <div class="contenu_boite_compte_plus"><div id="o_toolbarOutiiil">
-            ${[
-              ["o_toolbarItem6", "o_itemParametre", "Préférences"],
-              ["o_toolbarItem2", "o_itemChasse", "Chasse"],
-              ["o_toolbarItem3", "o_itemCombat", "Combat"],
-            ]
-              .map(
-                ([id, item, legende]) =>
-                  `<div class="o_toolbarOutil"><div id="${id}" class="o_toolbarItem"><span id="${item}" style="background-image: url(${IMG_SPRITE_MENU})"/></div><span class="o_toolbarLegende">${legende}</span></div>`,
-              )
-              .join("")}
-            </div></div></div>`;
-    /**
-     *
-     */
+            <div class="contenu_boite_compte_plus">
+            <label class="o_desactiverExtension" title="Coupe tout ce que l'extension ajoute ou calcule : chaque page s'affiche comme sans extension. La page se recharge."><input type="checkbox" id="o_desactiverExtension" ${desactivee ? "checked" : ""}/> Désactiver l'extension</label>
+            ${
+              desactivee
+                ? ""
+                : `<div id="o_toolbarOutiiil">${[
+                    ["o_toolbarItem6", "o_itemParametre", "Préférences"],
+                    ["o_toolbarItem2", "o_itemChasse", "Chasse"],
+                    ["o_toolbarItem3", "o_itemCombat", "Combat"],
+                  ]
+                    .map(
+                      ([id, item, legende]) =>
+                        `<div class="o_toolbarOutil"><div id="${id}" class="o_toolbarItem"><span id="${item}" style="background-image: url(${IMG_SPRITE_MENU})"/></div><span class="o_toolbarLegende">${legende}</span></div>`,
+                    )
+                    .join("")}</div>`
+            }
+            </div></div>`;
+    if (desactivee) return;
     this._boiteChasse = new BoiteChasse();
-    /**
-     *
-     */
     this._boiteCombat = new BoiteCombat();
-    /**
-     *
-     */
     this._boiteParametre = new BoiteParametre();
   }
   /**
@@ -55,10 +55,19 @@ class Dock {
     let $cplus = $("#boiteComptePlus").length ? $("#boiteComptePlus") : $("#boiteInfo"),
       $boite = $(this._html);
     if ($cplus.length) {
-      if ($cplus.is("#boiteComptePlus")) Dock.rapprocher($("#boiteInfo")[0], $cplus[0]);
+      // désactivée : les encadrés du jeu restent à leur place d'origine
+      if ($cplus.is("#boiteComptePlus") && !this._desactivee)
+        Dock.rapprocher($("#boiteInfo")[0], $cplus[0]);
       $boite.insertAfter($cplus);
       Dock.suivre($cplus[0], $boite[0], () => ECART_ENCADRES);
     } else $boite.addClass("o_toolbarFlottante").appendTo("body");
+    $boite.find("#o_desactiverExtension").on("change", (e) => {
+      try {
+        if (e.currentTarget.checked) localStorage.setItem(CLE_DESACTIVEE, "1");
+        else localStorage.removeItem(CLE_DESACTIVEE);
+      } catch (err) {}
+      location.reload();
+    });
     // evenement sur le clic d'un item de la boite d'outil
     $(".o_toolbarOutil").click((e) => {
       switch ($(e.currentTarget).find(".o_toolbarItem span").attr("id")) {

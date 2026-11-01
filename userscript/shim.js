@@ -135,7 +135,8 @@ var chrome = (function () {
       sendMessage(message) {
         let type = message && message.type;
         if (type == "fzzz_ouaf") return requeteOuaf(message);
-        if (type == "fzzz_majVerifier") return Promise.resolve({ statut: "userscript" });
+        if (type == "fzzz_majVerifier")
+          return Promise.resolve({ statut: "userscript", url: GM_info.script.downloadURL });
         return Promise.resolve(undefined);
       },
     },

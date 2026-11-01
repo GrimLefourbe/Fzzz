@@ -9,6 +9,13 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.65.0",
+    notes: [
+      "Case « Désactiver l'extension » sous le titre de la boîte Extension OUAF : chaque page s'affiche comme sans extension, sans aucun calcul ni requête ; seule la boîte reste, pour la réactiver.",
+      "Préférences → À propos → « Mettre à jour l'extension » : avec le script utilisateur, ouvre directement la dernière version dans Violentmonkey ou Tampermonkey.",
+    ],
+  },
+  {
     version: "1.64.0",
     notes: [
       "Alliance → Membres : épées de portée affichées même sans Compte+ (bleue : peut te flooder, rouge : tu peux le flooder) ; vue Floods sans la colonne « Unités envoyées ».",

@@ -656,6 +656,13 @@ html:not(.o_origineGenerale) #recherche {
 #o_boiteExtension {
   margin-top: 8px;
 }
+.o_desactiverExtension {
+  display: block;
+  font-size: 11px;
+  text-align: center;
+  padding: 2px 0;
+  cursor: pointer;
+}
 .o_versionExtension {
   font-size: 0.7em;
   opacity: 0.75;
@@ -1317,18 +1324,18 @@ html:not(.o_originePage) #tabChoixArmee {
 }
 
 /* Page alliance : police et marges réduites, le tableau tient dans le cadre du jeu */
-#tabMembresAlliance {
+html:not(.o_desactivee) #tabMembresAlliance {
   font-size: 0.85em;
 }
-#tabMembresAlliance thead th,
-#tabMembresAlliance thead td {
+html:not(.o_desactivee) #tabMembresAlliance thead th,
+html:not(.o_desactivee) #tabMembresAlliance thead td {
   padding: 6px 14px 6px 4px;
   font-size: 0.9em;
 }
-#tabMembresAlliance tbody td {
+html:not(.o_desactivee) #tabMembresAlliance tbody td {
   padding: 3px 4px;
 }
-center > div > #tabMembresAlliance {
+html:not(.o_desactivee) center > div > #tabMembresAlliance {
   width: calc(100% - 20px);
 }
 #o_historique > img,
@@ -2087,19 +2094,19 @@ html:not(.o_originePage) tr.en_tete_message > td.td_coche {
   padding: 0 6px;
   white-space: nowrap;
 }
-#tabMembresAlliance .o_allCol0,
-#tabMembresAlliance .o_allCol1,
-#tabMembresAlliance .o_allCol2 {
+html:not(.o_desactivee) #tabMembresAlliance .o_allCol0,
+html:not(.o_desactivee) #tabMembresAlliance .o_allCol1,
+html:not(.o_desactivee) #tabMembresAlliance .o_allCol2 {
   white-space: nowrap;
   /* DataTables fige des largeurs en ligne à l'initialisation : on les écrase */
   width: 1% !important;
 }
-#tabMembresAlliance th.o_allCol0,
-#tabMembresAlliance th.o_allCol1,
-#tabMembresAlliance th.o_allCol2 {
+html:not(.o_desactivee) #tabMembresAlliance th.o_allCol0,
+html:not(.o_desactivee) #tabMembresAlliance th.o_allCol1,
+html:not(.o_desactivee) #tabMembresAlliance th.o_allCol2 {
   white-space: normal;
 }
-#tabMembresAlliance .o_allRang {
+html:not(.o_desactivee) #tabMembresAlliance .o_allRang {
   padding-right: 8px;
 }
 /* épées de portée calculées par l'extension (comptes sans Compte+) */
@@ -2115,31 +2122,31 @@ html:not(.o_originePage) tr.en_tete_message > td.td_coche {
 .o_epeeRouge:visited {
   color: #b42318;
 }
-#tabMembresAlliance td.o_allVide {
+html:not(.o_desactivee) #tabMembresAlliance td.o_allVide {
   text-align: center;
 }
 /* tableau des membres : même largeur dans les trois vues ; rang à largeur fixe
    (12 caractères et les épées de portée) */
-#tabMembresAlliance {
+html:not(.o_desactivee) #tabMembresAlliance {
   width: 100% !important;
 }
-#tabMembresAlliance .o_allRang {
+html:not(.o_desactivee) #tabMembresAlliance .o_allRang {
   width: calc(13ch + 2.4em) !important;
   min-width: calc(13ch + 2.4em);
   max-width: calc(13ch + 2.4em);
   white-space: nowrap;
 }
-#tabMembresAlliance th,
-#tabMembresAlliance td {
+html:not(.o_desactivee) #tabMembresAlliance th,
+html:not(.o_desactivee) #tabMembresAlliance td {
   text-align: center !important;
 }
 /* mesure de la largeur naturelle d'une vue (AllianceFzzz) */
-#tabMembresAlliance.o_allMesure {
+html:not(.o_desactivee) #tabMembresAlliance.o_allMesure {
   width: auto !important;
 }
-#tabMembresAlliance.o_allMesure .o_allCol0,
-#tabMembresAlliance.o_allMesure .o_allCol1,
-#tabMembresAlliance.o_allMesure .o_allCol2 {
+html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol0,
+html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol1,
+html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
   width: auto !important;
 }
 #o_allInfobulle .o_allInfoCible {
@@ -2228,18 +2235,18 @@ html:not(.o_originePage) tr.en_tete_message > td.td_coche {
     text-align: center;
   }
   /* page Membres : le tableau défile dans son cadre, largeur fixe désactivée */
-  #tabMembresAlliance_wrapper {
+  html:not(.o_desactivee) #tabMembresAlliance_wrapper {
     width: auto !important;
     max-width: calc(100vw - 24px);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-  #tabMembresAlliance_wrapper .dt-buttons {
+  html:not(.o_desactivee) #tabMembresAlliance_wrapper .dt-buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
   }
-  #tabMembresAlliance_wrapper .dataTables_filter {
+  html:not(.o_desactivee) #tabMembresAlliance_wrapper .dataTables_filter {
     float: none;
     text-align: left;
   }
