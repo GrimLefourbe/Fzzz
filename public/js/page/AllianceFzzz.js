@@ -6,12 +6,7 @@
 // vue à rouvrir après le rechargement qui suit « Temps de trajet » synchronisé
 const CLE_VUE_APRES_SYNCHRO = "fzzz_vueMembresApresSynchro";
 // colonnes ajoutées en fin de ligne au tableau des membres
-const ALLIANCE_COLONNES_FZZZ = [
-  "Prochaine<br/>variation",
-  "Unités<br/>envoyées",
-  "TdC<br/>(estimé)",
-  "TdC<br/>final",
-];
+const ALLIANCE_COLONNES_FZZZ = ["Prochaine<br/>variation", "TdC<br/>(estimé)", "TdC<br/>final"];
 
 /**
  * Page Membres de l'alliance : vues « Standard » (tableau du jeu, à
@@ -39,7 +34,7 @@ class AllianceFzzz {
     $t.find("tbody tr").each((i, tr) => $(tr).find("td:eq(2)").addClass("o_allRang"));
     $t.find("tbody tr").each((i, tr) => {
       $(tr).append(
-        `<td class='o_allVar o_allCol0' data-order='99999999'>…</td><td class='o_allUnites o_allCol1' data-order='0'></td><td class='o_allMontant o_allCol2' data-order='0'></td><td class='o_allFinal o_allCol3' data-order='0'></td>`,
+        `<td class='o_allVar o_allCol0' data-order='99999999'>…</td><td class='o_allMontant o_allCol1' data-order='0'></td><td class='o_allFinal o_allCol2' data-order='0'></td>`,
       );
     });
     // ligne des totaux (pied fusionné sur toutes les colonnes) déplacée sous le
@@ -225,10 +220,6 @@ class AllianceFzzz {
         .toggleClass("o_allVide", !p)
         .html(p ? moment(p.date, "YYYY-MM-DD HH:mm").format("DD/MM HH:mm") : "—");
       cellule(r, n - k + 1)
-        .attr("data-order", p && p.flood && p.unites != null ? p.unites : 0)
-        .toggleClass("o_allVide", !(p && p.flood))
-        .html(p && p.flood ? (p.unites != null ? numeral(p.unites).format() : "?") : "—");
-      cellule(r, n - k + 2)
         .attr("data-order", p ? p.delta : 0)
         .toggleClass("o_allVide", !p)
         .html(p ? PartageChasses.libellePrise(p, "") : "—");
@@ -244,7 +235,7 @@ class AllianceFzzz {
       vars.forEach((v) => {
         tdc += v.delta;
         lignes.push(
-          `<tr><td>${moment(v.date, "YYYY-MM-DD HH:mm").format("DD/MM HH[h]mm")}</td><td>${numeral(tdc).format()} cm²</td><td class='o_partageVariation'>${PartageChasses.libellePrise(v, "")}</td><td class='o_partageVariation'>${v.flood && v.unites != null ? numeral(v.unites).format() : ""}</td><td class='o_allInfoCible'>${PartageChasses.sens(v, pseudo)}</td></tr>`,
+          `<tr><td>${moment(v.date, "YYYY-MM-DD HH:mm").format("DD/MM HH[h]mm")}</td><td>${numeral(tdc).format()} cm²</td><td class='o_partageVariation'>${PartageChasses.libellePrise(v, "")}</td><td class='o_partageVariation'>${v.flood && v.unites != null ? numeral(v.unites).format() : ""}</td><td class='o_allInfoCible'>${PartageChasses.sens(v)}</td></tr>`,
         );
       });
       let html = `<div class='gras'>${Utils.echapper(pseudo)}</div>${

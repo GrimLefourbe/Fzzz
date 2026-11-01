@@ -134,7 +134,7 @@ describe("chronologie : colonne « Lanceur → cible »", () => {
         floods: [flood({ lanceur: "Missyl", cible: "DonLapatte", unites: 19083, terrain: 19083 })],
       })}, { Missyl: 63207, DonLapatte: 95415 }),
         v = PartageChasses.chronologie(sim, ${JSON.stringify(pseudo)})[0];
-      return { delta: v.delta, sens: PartageChasses.sens(v, ${JSON.stringify(pseudo)}) };
+      return { delta: v.delta, sens: PartageChasses.sens(v) };
     })()`);
 
   test("même sens des deux côtés, signe de la variation inchangé", () => {
@@ -142,11 +142,9 @@ describe("chronologie : colonne « Lanceur → cible »", () => {
     expect(ligne("DonLapatte")).toEqual({ delta: -19083, sens: "Missyl → DonLapatte" });
   });
 
-  test("chasse : « pseudo → Chasse », pseudos échappés", () => {
-    expect(page.lire(`PartageChasses.sens({ flood: false, delta: 100 }, "Grim")`)).toBe(
-      "Grim → Chasse",
-    );
-    expect(page.lire(`PartageChasses.sens({ flood: true, lanceur: "<b>", cible: "B" }, "B")`)).toBe(
+  test("chasse : « Chasse », pseudos échappés", () => {
+    expect(page.lire(`PartageChasses.sens({ flood: false, delta: 100 })`)).toBe("Chasse");
+    expect(page.lire(`PartageChasses.sens({ flood: true, lanceur: "<b>", cible: "B" })`)).toBe(
       "&lt;b&gt; → B",
     );
   });

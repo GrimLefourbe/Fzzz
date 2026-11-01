@@ -9,6 +9,13 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.64.0",
+    notes: [
+      "Alliance → Membres : épées de portée affichées même sans Compte+ (bleue : peut te flooder, rouge : tu peux le flooder) ; vue Floods sans la colonne « Unités envoyées ».",
+      "Évolution du TdC : une chasse s'affiche simplement « Chasse ».",
+    ],
+  },
+  {
     version: "1.63.1",
     notes: [
       "Mes attaques en cours : un envoi refusé par le jeu (troupes insuffisantes…) n'est plus compté dans le TdC estimé des floods suivants sur la même cible.",

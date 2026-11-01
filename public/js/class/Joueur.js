@@ -488,6 +488,28 @@ class Joueur {
     return `<a href="Membre.php?Pseudo=${encodeURIComponent(pseudo)}" class="o_lienAttaque" data-pseudo="${pseudo}"><img src="images/icone/icone_degat_attaque.gif" title="Attaquer cette Fourmilière" alt="Attaquer" width="18" height="18"></a>`;
   }
   /**
+   * Épées de portée de flood dans les colonnes qui entourent le terrain, comme
+   * celles que le jeu affiche avec le Compte+ : bleue à gauche si ce joueur
+   * peut me flooder, rouge à droite (lien d'attaque) si je peux le flooder.
+   * Les cellules déjà remplies par le jeu ne sont pas touchées.
+   *
+   * @static
+   * @method epeesPortee
+   * @param {Joueur} joueur
+   * @param {jQuery} $gauche cellule à gauche du terrain
+   * @param {jQuery} $droite cellule à droite du terrain
+   */
+  static epeesPortee(joueur, $gauche, $droite) {
+    if (joueur.estJoueurCourant() || !(Utils.terrain > 0)) return;
+    let vide = ($c) => $c.length && !$c.children().length && !$c.text().trim();
+    if (vide($gauche) && joueur.estAttaquant())
+      $gauche.html(`<span class="o_epee o_epeeBleue" title="Peut te flooder">⚔\uFE0E</span>`);
+    if (vide($droite) && joueur.estAttaquable())
+      $droite.html(
+        `<a href="Membre.php?Pseudo=${encodeURIComponent(joueur.pseudo)}" class="o_lienAttaque o_epee o_epeeRouge" data-pseudo="${Utils.echapper(joueur.pseudo)}" title="Tu peux le flooder (clic : attaquer)">⚔\uFE0E</a>`,
+      );
+  }
+  /**
    * Clic sur une épée de Joueur.lienAttaque : lit l'id sur le profil puis
    * ouvre la page d'attaque. En cas d'échec, le lien mène au profil.
    *

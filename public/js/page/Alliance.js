@@ -88,6 +88,7 @@ class PageAlliance {
         rang: $(elt).find("td:eq(2)").text().trim().replace(/\//g, "-"),
       });
       this._gradesNatifs[pseudo] = tmpJoueurs[pseudo].rang;
+      Joueur.epeesPortee(tmpJoueurs[pseudo], $(elt).find("td:eq(4)"), $(elt).find("td:eq(6)"));
       // rang limité à 12 caractères (en entier au survol)
       let $rang = $(elt).find("td:eq(2)"),
         rang = $rang.text().trim();
