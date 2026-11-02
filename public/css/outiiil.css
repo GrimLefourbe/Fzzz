@@ -2658,3 +2658,9 @@ html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
 #o_filtreEnnemisCompte {
   margin-left: 6px;
 }
+
+/* page Convois : lien vers le site de suivi sous le Récapitulatif */
+.o_convoisLienOuaf {
+  margin: 6px 0 2px;
+  text-align: center;
+}

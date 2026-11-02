@@ -335,6 +335,7 @@ class CommerceFzzz {
             <tfoot><tr><td colspan='5'><a href='#' id='o_convoisMembreAjouter'>+ Ajouter un membre à suivre</a></td></tr></tfoot>
           </table>
           ${Object.keys(connus).length ? "" : "<p class='small'>Positions des membres inconnues : ouvre Alliance → Membres → « Temps de trajet » une fois pour les charger.</p>"}
+          <p class='o_convoisLienOuaf'><a href='${OUAF_SITE}' target='_blank' rel='noopener' title='Ouvre le site de suivi, connecté avec le mot de passe enregistré (Préférences → Convois)'>Ouvrir le site de suivi OUAF</a></p>
         </div>`),
       // tri par colonne : croissant, décroissant, puis ordre d'ajout (col null)
       tri = (() => {
@@ -434,6 +435,29 @@ class CommerceFzzz {
       suivis = suivis.filter((x) => x != p);
       enregistrer();
       afficher();
+    });
+    // connexion faite par l'extension (cookie de session du site), puis le
+    // site s'ouvre déjà connecté ; l'onglet est ouvert au clic pour ne pas
+    // être bloqué comme fenêtre surgissante
+    $bloc.find(".o_convoisLienOuaf a").on("click", (e) => {
+      e.preventDefault();
+      let onglet = window.open("about:blank", "_blank"),
+        ouvrir = () => {
+          if (onglet) {
+            onglet.opener = null;
+            onglet.location.href = OUAF_SITE;
+          } else window.open(OUAF_SITE, "_blank", "noopener");
+        };
+      OuafSuivi._connecter().then(ouvrir, (err) => {
+        ouvrir();
+        $.toast({
+          ...TOAST_WARNING,
+          text:
+            err.name == "code"
+              ? "Mot de passe du site de suivi à enregistrer dans Préférences → Convois : connecte-toi sur le site."
+              : "Connexion automatique impossible : connecte-toi sur le site.",
+        });
+      });
     });
     $bloc.find("#o_convoisMembreAjouter").on("click", (e) => {
       e.preventDefault();

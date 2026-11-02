@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.67.0",
+    notes: [
+      "Convois → Récapitulatif : lien « Ouvrir le site de suivi OUAF », qui ouvre le site déjà connecté avec le mot de passe enregistré.",
+    ],
+  },
+  {
     version: "1.66.4",
     notes: ["Page Ennemies : « Filtrer la liste » vraiment sous l'encadré Cibles."],
   },
