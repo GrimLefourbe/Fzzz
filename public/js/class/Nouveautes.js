@@ -9,6 +9,10 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.68.2",
+    notes: ["Page Ennemies : case « tous les joueurs » collée à son texte, à gauche."],
+  },
+  {
     version: "1.68.1",
     notes: [
       "Page Ennemies : Filtrer la liste aligné à gauche, option « tous les joueurs » en bas, en italique.",

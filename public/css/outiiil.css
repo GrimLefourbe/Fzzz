@@ -2656,11 +2656,22 @@ html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
   text-align: left !important;
 }
 .o_filtreEnnemisTous {
-  display: block;
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center;
+  gap: 4px;
+  width: auto !important;
   margin-top: 6px;
   font-style: italic;
   font-size: 0.9em;
   cursor: pointer;
+}
+/* le style du jeu élargit les champs : la case garde sa taille, collée au texte */
+.o_filtreEnnemisTous input {
+  flex: 0 0 auto;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 #o_filtreEnnemis input {
   width: 14em;
