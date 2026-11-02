@@ -2661,6 +2661,13 @@ html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
 
 /* page Convois : lien vers le site de suivi sous le Récapitulatif */
 .o_convoisLienOuaf {
-  margin: 6px 0 2px;
+  margin: 14px 0 2px;
   text-align: center;
+  font-size: 0.85em;
+}
+.o_convoisLienOuaf a,
+.o_convoisLienOuaf a:visited {
+  color: var(--fzzz-secondaire);
+  font-style: italic;
+  opacity: 0.85;
 }

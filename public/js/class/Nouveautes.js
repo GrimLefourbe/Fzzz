@@ -9,6 +9,10 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.67.1",
+    notes: ["Convois : lien vers le site de suivi plus discret (italique, couleur atténuée)."],
+  },
+  {
     version: "1.67.0",
     notes: [
       "Convois → Récapitulatif : lien « Ouvrir le site de suivi OUAF », qui ouvre le site déjà connecté avec le mot de passe enregistré.",
