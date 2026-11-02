@@ -49,13 +49,18 @@ class PageAttaquer {
       .filter((i, f) => $(f).children("legend").text().trim() == "Cibles")
       .first();
     if (!$cibles.length || !$("#tabEnnemie").length || $("#o_filtreEnnemis").length) return;
-    let $bloc =
-      $(`<fieldset id="o_filtreEnnemis"><legend><h2 style="display:inline">Filtrer la liste</h2></legend>
+    // hors du formulaire du jeu, dont la feuille de style aligne les encadrés
+    // côte à côte : juste après lui, dans la même cellule, sous « Cibles »
+    let $form = $cibles.closest("form"),
+      $bloc =
+        $(`<div id="o_filtreEnnemisZone"><fieldset id="o_filtreEnnemis"><legend><h2 style="display:inline">Filtrer la liste</h2></legend>
         <input type="text" id="o_filtreEnnemisTexte" placeholder="Pseudo ou alliance (Sam;Max)" autocomplete="off"/>
-        <span id="o_filtreEnnemisCompte" class="small"></span></fieldset>`).insertAfter($cibles);
+        <span id="o_filtreEnnemisCompte" class="small"></span></fieldset></div>`);
+    if ($form.length && $form.parent().is("td")) $bloc.insertAfter($form);
+    else $bloc.insertAfter($cibles);
     $bloc
       .find("#o_filtreEnnemisTexte")
-      // champ dans le formulaire de recherche du jeu : Entrée ne doit pas le soumettre
+      // Entrée ne doit jamais soumettre la recherche du jeu
       .on("keydown", (e) => {
         if (e.key == "Enter") e.preventDefault();
       })

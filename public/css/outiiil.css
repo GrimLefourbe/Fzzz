@@ -2638,12 +2638,17 @@ html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
 }
 
 /* page Ennemies : filtre de la liste sous l'encadré « Cibles » */
+#o_filtreEnnemisZone,
 #o_filtreEnnemis {
-  display: block;
-  float: none;
+  display: block !important;
+  float: none !important;
   clear: both;
-  height: auto;
-  min-height: 0;
+  position: static !important;
+  height: auto !important;
+  min-height: 0 !important;
+  width: auto !important;
+}
+#o_filtreEnnemisZone {
   margin-top: 6px;
 }
 #o_filtreEnnemis input {
