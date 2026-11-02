@@ -9,6 +9,10 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.69.1",
+    notes: ["Page Ennemies : bouton « Charger toutes les pages » au style des boutons du jeu."],
+  },
+  {
     version: "1.69.0",
     notes: [
       "Page Ennemies : bouton « Charger toutes les pages » dans Filtrer la liste, qui ajoute au tableau les pages suivantes de la recherche (le filtre porte alors sur tous les joueurs).",

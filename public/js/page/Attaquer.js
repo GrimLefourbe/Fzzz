@@ -62,7 +62,7 @@ class PageAttaquer {
         $(`<div id="o_filtreEnnemisZone"><fieldset id="o_filtreEnnemis"><legend><h2 style="display:inline">Filtrer la liste</h2></legend>
         <input type="text" id="o_filtreEnnemisTexte" placeholder="Pseudo ou alliance (Sam;Max)" autocomplete="off"/>
         <span id="o_filtreEnnemisCompte" class="small"></span>
-        <p class="o_ennemisPages"><button type="button" id="o_ennemisToutes" class="o_button" title="Le jeu affiche les joueurs page par page : charge les pages suivantes de cette recherche dans ce tableau (une requête par page)">Charger toutes les pages</button> <span id="o_ennemisPagesEtat" class="small"></span></p>
+        <p class="o_ennemisPages"><input type="button" id="o_ennemisToutes" value="Charger toutes les pages" title="Le jeu affiche les joueurs page par page : charge les pages suivantes de cette recherche dans ce tableau (une requête par page)"/> <span id="o_ennemisPagesEtat" class="small"></span></p>
         <label class="o_filtreEnnemisTous" title="Relance la recherche du jeu sans limite de terrain (Terrain Max et Min à 0)"><input type="checkbox" id="o_filtreEnnemisTous" ${tous ? "checked" : ""}/> Afficher tous les joueurs, même hors de portée</label></fieldset></div>`);
     if ($form.length && $form.parent().is("td")) $bloc.insertAfter($form);
     else $bloc.insertAfter($cibles);
