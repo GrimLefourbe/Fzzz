@@ -9,6 +9,9 @@
  * @class PageAttaquer
  * @constructor
  */
+// garde-fou : pages de résultats chargées au plus par « Charger toutes les pages »
+const PAGES_ENNEMIS_MAX = 40;
+
 class PageAttaquer {
   constructor(boiteComptePlus) {
     /**
@@ -59,9 +62,13 @@ class PageAttaquer {
         $(`<div id="o_filtreEnnemisZone"><fieldset id="o_filtreEnnemis"><legend><h2 style="display:inline">Filtrer la liste</h2></legend>
         <input type="text" id="o_filtreEnnemisTexte" placeholder="Pseudo ou alliance (Sam;Max)" autocomplete="off"/>
         <span id="o_filtreEnnemisCompte" class="small"></span>
+        <p class="o_ennemisPages"><button type="button" id="o_ennemisToutes" class="o_button" title="Le jeu affiche les joueurs page par page : charge les pages suivantes de cette recherche dans ce tableau (une requête par page)">Charger toutes les pages</button> <span id="o_ennemisPagesEtat" class="small"></span></p>
         <label class="o_filtreEnnemisTous" title="Relance la recherche du jeu sans limite de terrain (Terrain Max et Min à 0)"><input type="checkbox" id="o_filtreEnnemisTous" ${tous ? "checked" : ""}/> Afficher tous les joueurs, même hors de portée</label></fieldset></div>`);
     if ($form.length && $form.parent().is("td")) $bloc.insertAfter($form);
     else $bloc.insertAfter($cibles);
+    $bloc
+      .find("#o_ennemisToutes")
+      .on("click", (e) => PageAttaquer.chargerToutesPagesEnnemis($(e.currentTarget)));
     // un clic du joueur relance la recherche du jeu (une requête, page rechargée)
     $bloc.find("#o_filtreEnnemisTous").on("change", (e) => {
       PageAttaquer.preparerTousEnnemis(e.currentTarget.checked);
@@ -79,6 +86,87 @@ class PageAttaquer {
           e.currentTarget.value.trim() ? `${visibles} / ${total}` : "",
         );
       });
+  }
+  /**
+   * Colonne « Temps » (trajet jusqu'à la fourmilière) après la distance.
+   *
+   * @static
+   * @method tempsEnnemis
+   * @param {jQuery} $lignes lignes du tableau #tabEnnemie
+   */
+  static tempsEnnemis($lignes) {
+    $lignes.each((i, elt) => {
+      let distance = parseInt($(elt).find("td:eq(5)").text());
+      $(elt)
+        .find("td:eq(5)")
+        .after(
+          `<td class='centre'>${Utils.intToTime(Math.round(Math.pow(0.9, monProfil.niveauRecherche[6]) * 637200 * (1 - Math.exp(-(distance / 350)))))}</td>`,
+        );
+    });
+  }
+  /**
+   * Lignes de joueurs d'une page de résultats (sans l'en-tête).
+   *
+   * @static
+   * @method lignesEnnemis
+   * @param {jQuery} $racine page ou document
+   * @return {jQuery}
+   */
+  static lignesEnnemis($racine) {
+    return $racine.find("#tabEnnemie tr").filter((i, tr) => $(tr).children("td").length > 0);
+  }
+  /**
+   * Au clic : pages suivantes de la recherche affichée, demandées l'une après
+   * l'autre avec les critères du formulaire, et leurs joueurs ajoutés au
+   * tableau ; s'arrête à la première page sans joueur nouveau.
+   *
+   * @static
+   * @method chargerToutesPagesEnnemis
+   * @param {jQuery} $bouton
+   */
+  static chargerToutesPagesEnnemis($bouton) {
+    let $form = $("#formulairePageEnnemie"),
+      $etat = $("#o_ennemisPagesEtat"),
+      $corps = PageAttaquer.lignesEnnemis($(document)).first().parent(),
+      vus = new Set(
+        PageAttaquer.lignesEnnemis($(document))
+          .map((i, tr) => $(tr).children("td").eq(1).text().trim())
+          .get(),
+      ),
+      page = (parseInt($("#page").val()) || 1) + 1,
+      ajoutes = 0,
+      suivante = () => {
+        if (page > PAGES_ENNEMIS_MAX) return Promise.resolve();
+        $etat.text(`page ${page}…`);
+        let donnees = $form
+          .serializeArray()
+          .map((c) => (c.name == "page" ? { ...c, value: page } : c));
+        return Promise.resolve($.post(location.origin + "/ennemie.php", $.param(donnees))).then(
+          (html) => {
+            let nouvelles = PageAttaquer.lignesEnnemis(Utils.parseHtml(html)).filter(
+              (i, tr) => !vus.has($(tr).children("td").eq(1).text().trim()),
+            );
+            if (!nouvelles.length) return;
+            nouvelles.each((i, tr) => vus.add($(tr).children("td").eq(1).text().trim()));
+            PageAttaquer.tempsEnnemis(nouvelles);
+            $corps.append(nouvelles);
+            ajoutes += nouvelles.length;
+            page++;
+            return suivante();
+          },
+        );
+      };
+    $bouton.prop("disabled", true);
+    suivante()
+      .then(
+        () => $etat.text(`${vus.size} joueurs (${ajoutes} ajoutés)`),
+        () => {
+          $bouton.prop("disabled", false);
+          $etat.text(`page ${page} illisible : ${vus.size} joueurs affichés`);
+        },
+      )
+      // le filtre en cours s'applique aussi aux lignes ajoutées
+      .finally(() => $("#o_filtreEnnemisTexte").trigger("input"));
   }
   /**
    * Prépare le formulaire de recherche du jeu : tous les joueurs (Terrain Max

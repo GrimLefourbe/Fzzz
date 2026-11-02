@@ -676,16 +676,8 @@ const DATEPICKER_OPTION = {
               break;
             case uri == "/ennemie.php" && location.search == "":
               PageAttaquer.ajouterFiltreEnnemis();
-              // Affichage des temps de trajet
               $("#tabEnnemie tr:eq(0) th:eq(5)").after("<th class='centre'>Temps</th>");
-              $("#tabEnnemie tr:gt(0)").each((i, elt) => {
-                let distance = parseInt($(elt).find("td:eq(5)").text());
-                $(elt)
-                  .find("td:eq(5)")
-                  .after(
-                    `<td class='centre'>${Utils.intToTime(Math.round(Math.pow(0.9, monProfil.niveauRecherche[6]) * 637200 * (1 - Math.exp(-(distance / 350)))))}</td>`,
-                  );
-              });
+              PageAttaquer.tempsEnnemis($("#tabEnnemie tr:gt(0)"));
               break;
             default:
               break;

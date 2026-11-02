@@ -2655,6 +2655,9 @@ html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
 #o_filtreEnnemis * {
   text-align: left !important;
 }
+.o_ennemisPages {
+  margin: 6px 0 0;
+}
 .o_filtreEnnemisTous {
   display: flex !important;
   justify-content: flex-start !important;
