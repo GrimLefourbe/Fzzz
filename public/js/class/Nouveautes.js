@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.68.0",
+    notes: [
+      "Page Ennemies, Filtrer la liste : case « Afficher tous les joueurs, même hors de portée », qui relance la recherche du jeu sans limite de terrain.",
+    ],
+  },
+  {
     version: "1.67.1",
     notes: ["Convois : lien vers le site de suivi plus discret (italique, couleur atténuée)."],
   },

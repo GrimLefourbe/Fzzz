@@ -2651,6 +2651,11 @@ html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
 #o_filtreEnnemisZone {
   margin-top: 6px;
 }
+.o_filtreEnnemisTous {
+  display: block;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
 #o_filtreEnnemis input {
   width: 14em;
   max-width: 100%;

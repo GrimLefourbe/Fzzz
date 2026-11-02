@@ -52,12 +52,21 @@ class PageAttaquer {
     // hors du formulaire du jeu, dont la feuille de style aligne les encadrés
     // côte à côte : juste après lui, dans la même cellule, sous « Cibles »
     let $form = $cibles.closest("form"),
+      tous = ["#terrain_max", "#terrain_min"].every(
+        (c) => $(c).length && !parseInt(String($(c).val()).replace(/\D/g, "")),
+      ),
       $bloc =
         $(`<div id="o_filtreEnnemisZone"><fieldset id="o_filtreEnnemis"><legend><h2 style="display:inline">Filtrer la liste</h2></legend>
+        <label class="o_filtreEnnemisTous" title="Relance la recherche du jeu sans limite de terrain (Terrain Max et Min à 0)"><input type="checkbox" id="o_filtreEnnemisTous" ${tous ? "checked" : ""}/> Afficher tous les joueurs, même hors de portée</label>
         <input type="text" id="o_filtreEnnemisTexte" placeholder="Pseudo ou alliance (Sam;Max)" autocomplete="off"/>
         <span id="o_filtreEnnemisCompte" class="small"></span></fieldset></div>`);
     if ($form.length && $form.parent().is("td")) $bloc.insertAfter($form);
     else $bloc.insertAfter($cibles);
+    // un clic du joueur relance la recherche du jeu (une requête, page rechargée)
+    $bloc.find("#o_filtreEnnemisTous").on("change", (e) => {
+      PageAttaquer.preparerTousEnnemis(e.currentTarget.checked);
+      $("input[name='boutonRecherchePageEnnemie']").trigger("click");
+    });
     $bloc
       .find("#o_filtreEnnemisTexte")
       // Entrée ne doit jamais soumettre la recherche du jeu
@@ -70,6 +79,26 @@ class PageAttaquer {
           e.currentTarget.value.trim() ? `${visibles} / ${total}` : "",
         );
       });
+  }
+  /**
+   * Prépare le formulaire de recherche du jeu : tous les joueurs (Terrain Max
+   * et Min à 0, cases de portée décochées) ou ceux à portée (case « je peux
+   * attaquer » cochée : le jeu recalcule alors les limites de terrain).
+   * Les cases sont cliquées pour que le jeu réagisse comme à la main.
+   *
+   * @static
+   * @method preparerTousEnnemis
+   * @param {Boolean} tous
+   */
+  static preparerTousEnnemis(tous) {
+    let attaquable = $("#fourmiliere_attaquable")[0],
+      attaquante = $("#fourmiliere_attaquante")[0];
+    if (tous) {
+      if (attaquable && attaquable.checked) attaquable.click();
+      if (attaquante && attaquante.checked) attaquante.click();
+      $("#terrain_max, #terrain_min").val("0");
+    } else if (attaquable && !attaquable.checked) attaquable.click();
+    $("#page").val("1");
   }
   /**
    * Masque les lignes de #tabEnnemie dont ni l'alliance ni le pseudo ne

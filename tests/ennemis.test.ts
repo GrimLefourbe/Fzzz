@@ -37,3 +37,25 @@ describe("page Ennemies : filtre de la liste", () => {
     expect(visibles()).toHaveLength(4);
   });
 });
+
+describe("page Ennemies : afficher tous les joueurs", () => {
+  const formulaire = (attaquable: boolean, attaquante: boolean) =>
+    page.lire(
+      `document.body.innerHTML = '<input id="terrain_max" value="179 354"><input id="terrain_min" value="29 893">' +
+        '<input type="checkbox" id="fourmiliere_attaquable" ${attaquable ? "checked" : ""}><input type="checkbox" id="fourmiliere_attaquante" ${attaquante ? "checked" : ""}><input id="page" value="3">'`,
+    );
+  const etat = () =>
+    page.lire(
+      `[$("#terrain_max").val(), $("#terrain_min").val(), $("#fourmiliere_attaquable")[0].checked, $("#fourmiliere_attaquante")[0].checked, $("#page").val()]`,
+    );
+  test("tous : limites de terrain à 0, cases de portée décochées, page 1", () => {
+    formulaire(true, true);
+    page.lire(`PageAttaquer.preparerTousEnnemis(true)`);
+    expect(etat()).toEqual(["0", "0", false, false, "1"]);
+  });
+  test("retour à la portée : case « je peux attaquer » recochée", () => {
+    formulaire(false, false);
+    page.lire(`PageAttaquer.preparerTousEnnemis(false)`);
+    expect(etat()[2]).toBe(true);
+  });
+});
