@@ -57,9 +57,9 @@ class PageAttaquer {
       ),
       $bloc =
         $(`<div id="o_filtreEnnemisZone"><fieldset id="o_filtreEnnemis"><legend><h2 style="display:inline">Filtrer la liste</h2></legend>
-        <label class="o_filtreEnnemisTous" title="Relance la recherche du jeu sans limite de terrain (Terrain Max et Min à 0)"><input type="checkbox" id="o_filtreEnnemisTous" ${tous ? "checked" : ""}/> Afficher tous les joueurs, même hors de portée</label>
         <input type="text" id="o_filtreEnnemisTexte" placeholder="Pseudo ou alliance (Sam;Max)" autocomplete="off"/>
-        <span id="o_filtreEnnemisCompte" class="small"></span></fieldset></div>`);
+        <span id="o_filtreEnnemisCompte" class="small"></span>
+        <label class="o_filtreEnnemisTous" title="Relance la recherche du jeu sans limite de terrain (Terrain Max et Min à 0)"><input type="checkbox" id="o_filtreEnnemisTous" ${tous ? "checked" : ""}/> Afficher tous les joueurs, même hors de portée</label></fieldset></div>`);
     if ($form.length && $form.parent().is("td")) $bloc.insertAfter($form);
     else $bloc.insertAfter($cibles);
     // un clic du joueur relance la recherche du jeu (une requête, page rechargée)
