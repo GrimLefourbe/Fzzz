@@ -1596,7 +1596,6 @@ html:not(.o_desactivee) center > div > #tabMembresAlliance {
   gap: 0.4em;
   overflow: hidden;
   z-index: 29000;
-  font-size: 16px;
   cursor: move;
   touch-action: none;
   user-select: none;

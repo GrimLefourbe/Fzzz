@@ -7,7 +7,7 @@
  * Clé (localStorage) de la latence réglée par le joueur, en millisecondes.
  */
 const CLE_LATENCE = "fzzz_latence";
-/** Clé (localStorage) de la position de l'horloge flottante {x, y} en px. */
+/** Clé (stockage de l'extension) de la position déplacée de l'horloge {x, y} en px. */
 const CLE_POSITION_HORLOGE = "fzzz_positionHorloge";
 /**
  * Décalage estimé heure serveur − heure du PC, en ms (null tant qu'aucune
@@ -159,20 +159,61 @@ class Horloge {
         <span id='o_horlogeHeure'></span>
       </div>`).appendTo("body"),
       h = $h[0],
+      // position déplacée {x, y} (px dans la fenêtre), null : position d'origine
+      retenue = null,
       placer = (x, y) => {
         let maxX = document.documentElement.clientWidth - h.offsetWidth,
           maxY = document.documentElement.clientHeight - h.offsetHeight;
         h.style.left = Math.max(0, Math.min(x, maxX)) + "px";
         h.style.top = Math.max(0, Math.min(y, maxY)) + "px";
       },
-      retenue = Utils.lireStockage(CLE_POSITION_HORLOGE, null);
-    if (retenue && retenue.x != null) placer(retenue.x, retenue.y);
-    else {
-      let boite = $("#boiteInfo")[0],
-        r = boite ? Dock.emprise(boite) : null;
-      placer(r ? r.left : 8, r ? r.top - h.offsetHeight - 6 : 8);
+      // largeur de l'encart « S5 Pseudo » (dessiné par ses éléments internes),
+      // police réduite jusqu'à ce que l'heure et la latence y tiennent
+      caler = () => {
+        let boite = $("#boiteInfo")[0],
+          r = boite ? Dock.emprise(boite) : null;
+        if (r && r.width) h.style.width = r.width + "px";
+        $("#o_horlogeHeure").css("font-size", "1em");
+        let taille = 20;
+        h.style.fontSize = taille + "px";
+        if (h.scrollWidth > h.clientWidth)
+          taille = Math.max(10, Math.floor((20 * h.clientWidth) / h.scrollWidth));
+        for (; taille >= 10; taille--) {
+          h.style.fontSize = taille + "px";
+          if (taille == 20 || h.scrollWidth <= h.clientWidth) break;
+        }
+        $("#o_horlogeHeure").css("font-size", "0.7em");
+        if (retenue) placer(retenue.x, retenue.y);
+        else placer(r ? r.left : 8, r ? r.top - h.offsetHeight - 6 : 8);
+      },
+      appliquer = (pos) => {
+        retenue = pos && pos.x != null ? pos : null;
+        caler();
+        h.style.visibility = "";
+      },
+      enregistrer = (pos) => {
+        try {
+          chrome.storage.local.set({ [CLE_POSITION_HORLOGE]: pos });
+        } catch (err) {}
+      };
+    // position partagée par toutes les pages et onglets du jeu (http et https
+    // compris) : stockage de l'extension, suivi en direct
+    h.style.visibility = "hidden";
+    try {
+      chrome.storage.local.get(CLE_POSITION_HORLOGE).then(
+        (r) => appliquer(r[CLE_POSITION_HORLOGE]),
+        () => appliquer(null),
+      );
+      chrome.storage.onChanged.addListener((changements, zone) => {
+        if (zone == "local" && changements[CLE_POSITION_HORLOGE])
+          appliquer(changements[CLE_POSITION_HORLOGE].newValue);
+      });
+    } catch (e) {
+      appliquer(null);
     }
-    $(window).on("resize", () => placer(h.offsetLeft, h.offsetTop));
+    // encadrés du jeu placés tardivement : position d'origine recalculée
+    $(window).on("load resize", caler);
+    setTimeout(caler, 1000);
     // glisser (souris ou doigt) ailleurs que sur les boutons de latence
     h.addEventListener("pointerdown", (e) => {
       if (e.target.closest("button")) return;
@@ -182,12 +223,8 @@ class Horloge {
         lacher = () => {
           h.removeEventListener("pointermove", bouger);
           h.classList.remove("o_horlogeDeplace");
-          try {
-            localStorage.setItem(
-              CLE_POSITION_HORLOGE,
-              JSON.stringify({ x: h.offsetLeft, y: h.offsetTop }),
-            );
-          } catch (err) {}
+          retenue = { x: h.offsetLeft, y: h.offsetTop };
+          enregistrer(retenue);
         };
       e.preventDefault();
       h.setPointerCapture(e.pointerId);

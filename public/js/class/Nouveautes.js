@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.70.1",
+    notes: [
+      "Horloge flottante : à sa place d'origine au-dessus de l'encart S5 tant qu'elle n'est pas déplacée ; une fois déplacée, même position sur toutes les pages et tous les onglets.",
+    ],
+  },
+  {
     version: "1.70.0",
     notes: [
       "Horloge flottante : toujours visible, déplaçable en la faisant glisser ; sa position est retenue.",
