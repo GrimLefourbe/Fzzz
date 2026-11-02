@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.70.0",
+    notes: [
+      "Horloge flottante : toujours visible, déplaçable en la faisant glisser ; sa position est retenue.",
+    ],
+  },
+  {
     version: "1.69.1",
     notes: ["Page Ennemies : bouton « Charger toutes les pages » au style des boutons du jeu."],
   },

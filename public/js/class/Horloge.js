@@ -7,6 +7,8 @@
  * Clé (localStorage) de la latence réglée par le joueur, en millisecondes.
  */
 const CLE_LATENCE = "fzzz_latence";
+/** Clé (localStorage) de la position de l'horloge flottante {x, y} en px. */
+const CLE_POSITION_HORLOGE = "fzzz_positionHorloge";
 /**
  * Décalage estimé heure serveur − heure du PC, en ms (null tant qu'aucune
  * réponse du serveur n'a été observée).
@@ -138,72 +140,63 @@ class Horloge {
     return `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1).replace(".", ",")} s`;
   }
   /**
-   * Place l'horloge au-dessus de l'encart « S5 Pseudo » et lance sa mise à jour,
-   * calée sur le changement de seconde.
+   * Horloge flottante : fixée à l'écran (visible en faisant défiler la page),
+   * déplaçable en la faisant glisser, position retenue d'une page à l'autre.
+   * Première fois : au-dessus de l'encart « S5 Pseudo ». Mise à jour calée sur
+   * le changement de seconde.
    *
    * @static
    * @method afficher
    */
   static afficher() {
-    let $boite = $("#boiteInfo");
-    if (!$boite.length || $("#o_horloge").length) return;
-    // Ancrée à l'encart : elle suit sa position, qu'il défile avec la page ou non.
-    if ($boite.css("position") == "static") $boite.css("position", "relative");
-    $boite.css("overflow", "visible");
-    $(`<div id='o_horloge'>
+    if ($("#o_horloge").length) return;
+    let $h = $(`<div id='o_horloge' title=''>
         <span class='o_horlogeLatence'>
           <button type='button' id='o_latenceMoins' title='Latence − 0,1 s'>−</button>
           <span id='o_latenceValeur' title='Latence : délai entre ton clic et sa prise en compte par le serveur. Elle est ajoutée à l’heure affichée et aux synchronisations d’attaque.'></span>
           <button type='button' id='o_latencePlus' title='Latence + 0,1 s'>+</button>
         </span>
         <span id='o_horlogeHeure'></span>
-      </div>`).prependTo($boite);
-    // Le cadre visible de l'encart est dessiné par ses éléments internes, plus
-    // larges que #boiteInfo lui-même : on mesure leur emprise réelle et on y
-    // cale l'horloge (largeur minimale ; elle s'élargit si son contenu dépasse).
-    let caler = () => {
-      let boite = $boite[0].getBoundingClientRect(),
-        gauche = boite.left,
-        droite = boite.right;
-      $boite
-        .find("*")
-        .not("#o_horloge, #o_horloge *")
-        .each((i, elt) => {
-          let r = elt.getBoundingClientRect();
-          if (r.width > 0 && r.height > 0) {
-            gauche = Math.min(gauche, r.left);
-            droite = Math.max(droite, r.right);
-          }
-        });
-      let $h = $("#o_horloge").css({
-        left: gauche - boite.left + "px",
-        width: droite - gauche + "px",
-        minWidth: 0,
-        right: "auto",
-        float: "none",
-      });
-      // police réduite jusqu'à ce que l'heure et la latence tiennent dans le
-      // cadre, puis l'heure seule réduite de 30 %
-      // taille estimée d'une mesure (la largeur suit la police), puis corrigée :
-      // deux ou trois mises en page au lieu d'une par pixel essayé
-      $("#o_horlogeHeure").css("font-size", "1em");
-      $h.css("font-size", "20px");
-      let h = $h[0],
-        taille = 20;
-      if (h.scrollWidth > h.clientWidth)
-        taille = Math.max(10, Math.floor((20 * h.clientWidth) / h.scrollWidth));
-      for (; taille >= 10; taille--) {
-        $h.css("font-size", taille + "px");
-        if (taille == 20 || h.scrollWidth <= h.clientWidth) break;
-      }
-      $("#o_horlogeHeure").css("font-size", "0.7em");
-    };
-    caler();
-    // recalage une fois les images et polices du jeu chargées
-    $(window).on("load resize", caler);
-    setTimeout(caler, 1000);
+      </div>`).appendTo("body"),
+      h = $h[0],
+      placer = (x, y) => {
+        let maxX = document.documentElement.clientWidth - h.offsetWidth,
+          maxY = document.documentElement.clientHeight - h.offsetHeight;
+        h.style.left = Math.max(0, Math.min(x, maxX)) + "px";
+        h.style.top = Math.max(0, Math.min(y, maxY)) + "px";
+      },
+      retenue = Utils.lireStockage(CLE_POSITION_HORLOGE, null);
+    if (retenue && retenue.x != null) placer(retenue.x, retenue.y);
+    else {
+      let boite = $("#boiteInfo")[0],
+        r = boite ? Dock.emprise(boite) : null;
+      placer(r ? r.left : 8, r ? r.top - h.offsetHeight - 6 : 8);
+    }
+    $(window).on("resize", () => placer(h.offsetLeft, h.offsetTop));
+    // glisser (souris ou doigt) ailleurs que sur les boutons de latence
+    h.addEventListener("pointerdown", (e) => {
+      if (e.target.closest("button")) return;
+      let dx = e.clientX - h.offsetLeft,
+        dy = e.clientY - h.offsetTop,
+        bouger = (m) => placer(m.clientX - dx, m.clientY - dy),
+        lacher = () => {
+          h.removeEventListener("pointermove", bouger);
+          h.classList.remove("o_horlogeDeplace");
+          try {
+            localStorage.setItem(
+              CLE_POSITION_HORLOGE,
+              JSON.stringify({ x: h.offsetLeft, y: h.offsetTop }),
+            );
+          } catch (err) {}
+        };
+      e.preventDefault();
+      h.setPointerCapture(e.pointerId);
+      h.classList.add("o_horlogeDeplace");
+      h.addEventListener("pointermove", bouger);
+      h.addEventListener("pointerup", lacher, { once: true });
+      h.addEventListener("pointercancel", lacher, { once: true });
+    });
     let regler = (delta) => (e) => {
-      // l'encart est cliquable (lien vers le profil) : le clic s'arrête ici
       e.preventDefault();
       e.stopPropagation();
       Horloge.latence = Horloge.latence + delta;

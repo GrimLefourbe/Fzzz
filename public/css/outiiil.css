@@ -1577,14 +1577,12 @@ html:not(.o_desactivee) center > div > #tabMembresAlliance {
 /* Fzzz : horloge au-dessus de l'encart « S5 Pseudo ». La largeur est posée
    en JS sur celle de l'encart ; !important protège des styles du jeu. */
 #o_horloge {
-  position: absolute !important;
-  bottom: 100% !important;
-  left: 0 !important;
+  position: fixed !important;
   display: flex !important;
   align-items: center;
   justify-content: space-between;
   box-sizing: border-box !important;
-  margin: 0 0 6px 0 !important;
+  margin: 0 !important;
   padding: 2px 6px !important;
   /* même gris foncé que le cadre « S5 Pseudo » (relevé sur le jeu) */
   background: #535642 !important;
@@ -1597,7 +1595,14 @@ html:not(.o_desactivee) center > div > #tabMembresAlliance {
   white-space: nowrap;
   gap: 0.4em;
   overflow: hidden;
-  z-index: 10;
+  z-index: 29000;
+  font-size: 16px;
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+}
+#o_horloge.o_horlogeDeplace {
+  opacity: 0.85;
 }
 #o_horloge #o_horlogeHeure {
   font-size: 1em;
