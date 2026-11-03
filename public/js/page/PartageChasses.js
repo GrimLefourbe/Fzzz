@@ -459,19 +459,26 @@ class PartageChasses {
    *
    * @static
    * @method retirerFloods
+   * @param {Array<Number>} ids
+   * @param {jQuery|null} $bouton
+   * @param {Boolean} [discret] retrait automatique (attaques disparues de la
+   *   liste) : rien n'est écrit si aucun de ces floods n'est dans le sujet, et
+   *   un message seulement si un flood à venir est retiré
    * @return {Promise}
    */
-  static retirerFloods(ids, $bouton) {
+  static retirerFloods(ids, $bouton, discret = false) {
     let pseudo = monProfil.pseudo,
       titre = `Floods | ${pseudo}`;
     if ($bouton) $bouton.prop("disabled", true);
-    return PartageChasses.enFile(() => PartageChasses._retirerFloods(ids, $bouton, pseudo, titre));
+    return PartageChasses.enFile(() =>
+      PartageChasses._retirerFloods(ids, $bouton, pseudo, titre, discret),
+    );
   }
   /**
    * @private
    * @static
    */
-  static _retirerFloods(ids, $bouton, pseudo, titre) {
+  static _retirerFloods(ids, $bouton, pseudo, titre, discret = false) {
     return PartageChasses.sujets()
       .then((sujets) => {
         let idSujet = sujets[`Floods | ${pseudo.toLowerCase()}`];
@@ -479,9 +486,12 @@ class PartageChasses {
         return PartageChasses.lireSujet(idSujet).then((d) => {
           let maintenant = Horloge.serveur().format("YYYY-MM-DD HH:mm"),
             gardes = d.floods.filter((e) => e.date >= maintenant && !ids.includes(e.id)),
-            retires = d.floods.filter((e) => ids.includes(e.id)).length,
-            // un sujet ne peut pas être vide : ligne neutre, ignorée à la lecture
-            message =
+            presents = d.floods.filter((e) => ids.includes(e.id)),
+            // un flood arrivé n'est plus « retiré » : il serait purgé de toute façon
+            retires = presents.filter((e) => e.date >= maintenant).length;
+          if (discret && !presents.length) return 0;
+          // un sujet ne peut pas être vide : ligne neutre, ignorée à la lecture
+          let message =
               gardes
                 .sort((a, b) =>
                   a.date < b.date ? 1 : a.date > b.date ? -1 : (b.id || 0) - (a.id || 0),
@@ -498,19 +508,22 @@ class PartageChasses {
       .then((n) => {
         PartageChasses.oublierFloodsPartages(ids);
         AttaqueLancee.majPartages();
-        $.toast({
-          ...TOAST_SUCCESS,
-          text: n
-            ? `${n} flood${n > 1 ? "s retirés" : " retiré"} du forum de la ${Utils.alliance}.`
-            : "Ce flood n'était plus dans le forum.",
-        });
+        if (n || !discret)
+          $.toast({
+            ...TOAST_SUCCESS,
+            text: n
+              ? `${n} flood${n > 1 ? "s annulés retirés" : " annulé retiré"} du forum de la ${Utils.alliance}.`
+              : "Ce flood n'était plus dans le forum.",
+          });
       })
-      .catch(() =>
+      .catch((e) => {
+        // pas de section de partage : rien à retirer, inutile de réessayer
+        if (e && e.message == "absente") PartageChasses.oublierFloodsPartages(ids);
         $.toast({
           ...TOAST_ERROR,
-          text: "Retrait impossible : le forum de l'alliance n'a pas pu être lu ou modifié.",
-        }),
-      )
+          text: "Retrait du flood annulé impossible : le forum de l'alliance n'a pas pu être lu ou modifié.",
+        });
+      })
       .finally(() => $bouton && $bouton.prop("disabled", false));
   }
   /**

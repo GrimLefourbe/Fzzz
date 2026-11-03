@@ -81,29 +81,44 @@ describe("« + partager » et annulation", () => {
     `var Horloge = { serveur: () => moment() };
      var TroupesDehors = { ajouterAttaque() {}, synchroniserAttaques() {} };
      var Armee = class { constructor() { this.unite = []; } };
-     var PARTAGES = [], RETIRES = [];
+     var PARTAGES = [], RETIRES = [], PARTAGE_ECHOUE = false, PUBLIES = { 7: 1 };
      var PartageChasses = {
-       floodsPartages: () => ({ 7: 1 }),
-       partagerFloods(c) { PARTAGES.push(...c.map((x) => x.id)); return Promise.resolve(); },
+       floodsPartages: () => ({ ...PUBLIES, ...Object.fromEntries(PARTAGES.map((id) => [id, 1])) }),
+       partagerFloods(c) {
+         if (!PARTAGE_ECHOUE) PARTAGES.push(...c.map((x) => x.id));
+         return Promise.resolve();
+       },
        retirerFloods(ids) { RETIRES.push(...ids); return Promise.resolve(); },
      };`,
   );
   const captures = (liste: string) =>
     p.lire(`localStorage.setItem(CLE_ATTAQUES_LANCEES, JSON.stringify(${liste}));
-      PARTAGES = []; RETIRES = [];`);
+      PARTAGES = []; RETIRES = []; PARTAGE_ECHOUE = false; PUBLIES = { 7: 1 };`);
   const futur = "moment().add(1, 'h').valueOf()";
 
-  test("seules les attaques marquées et liées sont partagées, une seule fois", () => {
+  test("seules les attaques marquées et liées sont partagées, une seule fois", async () => {
     captures(`[
       { id: 5, cible: "A", lieu: "Terrain de Chasse", unite: {}, arrivee: ${futur}, partager: true },
       { id: 6, cible: "A", lieu: "Terrain de Chasse", unite: {}, arrivee: ${futur} },
       { id: null, cible: "B", lieu: "Terrain de Chasse", unite: {}, lancee: Date.now(), partager: true },
     ]`);
-    p.lire("AttaqueLancee.partagerMarquees()");
+    await p.lire("AttaqueLancee.partagerMarquees()");
     expect(p.lire("PARTAGES")).toEqual([5]);
-    p.lire("AttaqueLancee.partagerMarquees()");
+    await p.lire("AttaqueLancee.partagerMarquees()");
     expect(p.lire("PARTAGES")).toEqual([5]);
     expect(p.lire(`AttaqueLancee.charger().filter((a) => a.partager).length`)).toBe(1);
+  });
+  test("partage interrompu (page quittée, forum injoignable) : refait à la page suivante", async () => {
+    captures(
+      `[{ id: 5, cible: "A", lieu: "Terrain de Chasse", unite: {}, arrivee: ${futur}, partager: true }]`,
+    );
+    p.lire("PARTAGE_ECHOUE = true");
+    await p.lire("AttaqueLancee.partagerMarquees()");
+    expect(p.lire(`AttaqueLancee.charger()[0].partager`)).toBe(true);
+    p.lire("PARTAGE_ECHOUE = false");
+    await p.lire("AttaqueLancee.partagerMarquees()");
+    expect(p.lire("PARTAGES")).toEqual([5]);
+    expect(p.lire(`AttaqueLancee.charger()[0].partager`)).toBeUndefined();
   });
   test("marque posée à l'enregistrement", () => {
     captures("[]");
@@ -117,6 +132,13 @@ describe("« + partager » et annulation", () => {
     ]`);
     p.lire("AttaqueLancee.synchroniser([])");
     expect(p.lire("RETIRES")).toEqual([7]);
+  });
+  test("flood partagé à la main ou ailleurs (non capturé) puis annulé : retiré aussi", () => {
+    captures("[]");
+    p.lire("PUBLIES = { 9: 1, 10: 1 }");
+    const lignes = `[{ id: 10, cible: "A", arrivee: moment().add(1, "h") }]`;
+    p.lire(`AttaqueLancee.synchroniser(${lignes})`);
+    expect(p.lire("RETIRES")).toEqual([9]);
   });
   test("page relue peut-être hors du jeu : rien n'est retiré", () => {
     captures(`[{ id: 7, cible: "A", lieu: "Terrain de Chasse", unite: {}, arrivee: ${futur} }]`);

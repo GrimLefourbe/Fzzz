@@ -9,6 +9,13 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.70.2",
+    notes: [
+      "« Flooder + partager » : le partage n'est plus perdu quand l'armée se replace après le flood (le replacement attend la fin du partage) ; un partage interrompu est refait à la page suivante.",
+      "Flood annulé : retiré du forum même s'il a été partagé à la main, depuis un autre appareil, ou sans être capturé par l'extension.",
+    ],
+  },
+  {
     version: "1.70.1",
     notes: [
       "Horloge flottante : à sa place d'origine au-dessus de l'encart S5 tant qu'elle n'est pas déplacée ; une fois déplacée, même position sur toutes les pages et tous les onglets.",

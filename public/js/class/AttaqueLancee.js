@@ -345,9 +345,13 @@ class AttaqueLancee {
     TroupesDehors.synchroniserAttaques(lignes);
     if (AttaqueLancee.recalculerTerrains(liste)) modifie = true;
     if (modifie) AttaqueLancee.sauvegarder(liste);
-    let partages = PartageChasses.floodsPartages(),
-      aRetirer = annulees.map((a) => a.id).filter((id) => partages[id]);
-    if (retirer && aRetirer.length) PartageChasses.retirerFloods(aRetirer);
+    // flood partagé dont la ligne a disparu (annulé, ou arrivé) : retiré du
+    // forum, qu'il ait été capturé ou partagé à la main ou depuis un autre appareil
+    let affiches = new Set(lignes.map((l) => l.id)),
+      aRetirer = Object.keys(PartageChasses.floodsPartages())
+        .map(Number)
+        .filter((id) => id && !affiches.has(id));
+    if (retirer && aRetirer.length) PartageChasses.retirerFloods(aRetirer, null, true);
     return liste;
   }
   /**
@@ -359,12 +363,20 @@ class AttaqueLancee {
    * @return {Promise}
    */
   static partagerMarquees() {
-    let liste = AttaqueLancee.charger(),
-      marquees = liste.filter((a) => a.partager && a.id);
-    if (!marquees.length) return Promise.resolve();
-    marquees.forEach((a) => delete a.partager);
-    AttaqueLancee.sauvegarder(liste);
-    return PartageChasses.partagerFloods(marquees, null);
+    let marquees = AttaqueLancee.charger().filter((a) => a.partager && a.id);
+    if (!marquees.length) return (AttaqueLancee.partageEnCours = Promise.resolve());
+    // la marque n'est retirée qu'une fois le flood présent dans le forum : un
+    // partage interrompu (page quittée, forum injoignable) est refait plus tard
+    return (AttaqueLancee.partageEnCours = PartageChasses.partagerFloods(marquees, null).then(
+      () => {
+        let partages = PartageChasses.floodsPartages(),
+          liste = AttaqueLancee.charger();
+        liste.forEach((a) => {
+          if (a.partager && partages[a.id]) delete a.partager;
+        });
+        AttaqueLancee.sauvegarder(liste);
+      },
+    ));
   }
   /**
    * Heure d'arrivée arrondie à la minute, avec la date si ce n'est pas

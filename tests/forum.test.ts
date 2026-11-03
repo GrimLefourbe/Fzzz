@@ -85,3 +85,32 @@ describe("section cachée du forum", () => {
     expect(page.lire(`PartageChasses.estSection("Discussions")`)).toBe(false);
   });
 });
+
+describe("retrait automatique des floods disparus de la liste", () => {
+  // sujet « Floods | Moi » : un flood à venir (#20) et un arrivé (#21)
+  const sujet = (ecrits: string[]) => {
+    page.lire(`var ECRITS = []; var monProfil = { pseudo: "Moi" };
+      var Horloge = { serveur: () => moment("2026-11-03 12:00", "YYYY-MM-DD HH:mm") };
+      var AttaqueLancee = { majPartages() {} };
+      $.toast = () => {}; var TOAST_SUCCESS = {}, TOAST_ERROR = {}, TOAST_INFO = {};
+      PartageChasses.sujets = () => Promise.resolve({ "Floods | moi": 5 });
+      PartageChasses._xajax = (fn, q) => { if (fn == "envoiEditTopic") ECRITS.push(decodeURIComponent(q)); return Promise.resolve(); };
+      PartageChasses.lireSujet = () => Promise.resolve({ chasses: [], floods: [
+        { date: "2026-11-03 18:00", cible: "A", terrain: 100, id: 20 },
+        { date: "2026-11-03 10:00", cible: "B", terrain: 100, id: 21 },
+      ] });`);
+    return ecrits;
+  };
+  test("flood à venir annulé : retiré du sujet", async () => {
+    sujet([]);
+    await page.lire(`PartageChasses.retirerFloods([20], null, true)`);
+    const ecrits = page.lire<string[]>("ECRITS");
+    expect(ecrits).toHaveLength(1);
+    expect(ecrits[0]).not.toContain("#20");
+  });
+  test("aucun de ces floods dans le sujet : rien n'est écrit", async () => {
+    sujet([]);
+    await page.lire(`PartageChasses.retirerFloods([99], null, true)`);
+    expect(page.lire<string[]>("ECRITS")).toHaveLength(0);
+  });
+});

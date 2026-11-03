@@ -105,7 +105,12 @@ class PageArmee {
     // elle met en évidence le bouton de replacement, le joueur clique.
     // rechargement après un clic (Annuler, transfert…) : même position à l'écran
     Utils.garderPosition("fzzz_positionArmee");
-    if (floodFlag) this.replacerArmee(true);
+    // fin de flood : le replacement recharge la page, il attend que le partage
+    // des floods (« Flooder + partager ») soit écrit dans le forum
+    if (floodFlag)
+      Promise.resolve(AttaqueLancee.partageEnCours)
+        .catch(() => {})
+        .then(() => this.replacerArmee(true));
     else if (
       monProfil.parametre["replacerArmeeAuto"].valeur &&
       this.uniteTransferables() &&
