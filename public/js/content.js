@@ -689,6 +689,12 @@ const DATEPICKER_OPTION = {
             text: `${NOM_EXTENSION} : une erreur a empêché certains outils de s'afficher sur cette page.`,
           });
         }
+        // partages et retraits de floods laissés en suspens par une page quittée trop tôt
+        try {
+          PartageChasses.reprendre();
+        } catch (e) {
+          console.error("Fzzz : reprise des partages", e);
+        }
         Utils.noterChargement(debutExtension);
       });
   }

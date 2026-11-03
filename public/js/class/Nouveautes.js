@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.70.3",
+    notes: [
+      "Partage des floods : un partage ou un retrait du forum interrompu par un changement de page est repris automatiquement au chargement de la page suivante, quelle qu'elle soit.",
+    ],
+  },
+  {
     version: "1.70.2",
     notes: [
       "« Flooder + partager » : le partage n'est plus perdu quand l'armée se replace après le flood (le replacement attend la fin du partage) ; un partage interrompu est refait à la page suivante.",

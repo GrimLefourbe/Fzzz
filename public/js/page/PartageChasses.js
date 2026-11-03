@@ -12,6 +12,9 @@ const PARTAGE_MAX_ENTREES = 300;
 
 // numéros des attaques déjà publiées dans le sujet « Floods » du joueur
 const CLE_FLOODS_PARTAGES = "fzzz_floodsPartages";
+// floods à retirer du forum, notés avant l'écriture : une page quittée trop
+// tôt n'empêche pas le retrait, repris au chargement de la page suivante
+const CLE_FLOODS_A_RETIRER = "fzzz_floodsARetirer";
 // dernière minute d'impact des chasses partagées depuis ce navigateur
 // ("AAAA-MM-JJ HH:mm") : tant qu'elle n'est pas passée, la page Ressources
 // recale le sujet « Chasses » sur les chasses encore en cours
@@ -21,6 +24,8 @@ const CLE_PARTAGE_CHASSES_APRES = "fzzz_partageChassesApres";
 // lectures et écritures du sujet « Floods » d'une page, l'une après l'autre :
 // une lecture partie avant une écriture rendrait un état périmé
 let fileFloodsForum = Promise.resolve();
+// numéros dont le retrait est déjà en cours sur cette page
+let retraitsEnCours = new Set();
 
 /**
  * Partage des chasses et des floods avec l'alliance, stocké dans son forum
@@ -469,10 +474,46 @@ class PartageChasses {
   static retirerFloods(ids, $bouton, discret = false) {
     let pseudo = monProfil.pseudo,
       titre = `Floods | ${pseudo}`;
+    ids = ids.filter((id) => !retraitsEnCours.has(id));
+    if (!ids.length) return Promise.resolve();
+    PartageChasses.noterARetirer(ids, true);
+    ids.forEach((id) => retraitsEnCours.add(id));
     if ($bouton) $bouton.prop("disabled", true);
     return PartageChasses.enFile(() =>
       PartageChasses._retirerFloods(ids, $bouton, pseudo, titre, discret),
-    );
+    ).finally(() => ids.forEach((id) => retraitsEnCours.delete(id)));
+  }
+  /**
+   * Note (ajouter) ou efface des floods de la liste des retraits à faire.
+   *
+   * @static
+   * @method noterARetirer
+   * @param {Array<Number>} ids
+   * @param {Boolean} ajouter
+   */
+  static noterARetirer(ids, ajouter) {
+    let liste = Utils.lireStockage(CLE_FLOODS_A_RETIRER, []).filter((id) => !ids.includes(id));
+    if (ajouter) liste.push(...ids);
+    try {
+      localStorage.setItem(CLE_FLOODS_A_RETIRER, JSON.stringify(liste));
+    } catch (e) {}
+  }
+  /**
+   * Au chargement de chaque page : reprend les retraits et les partages de
+   * floods qu'une page quittée trop tôt a laissés en suspens. Aucune requête
+   * s'il n'y a rien en attente.
+   *
+   * @static
+   * @method reprendre
+   * @return {Promise}
+   */
+  static reprendre() {
+    if (!monProfil.pseudo) return Promise.resolve();
+    let aRetirer = Utils.lireStockage(CLE_FLOODS_A_RETIRER, []);
+    return Promise.all([
+      aRetirer.length ? PartageChasses.retirerFloods(aRetirer, null, true) : null,
+      AttaqueLancee.partagerMarquees(),
+    ]);
   }
   /**
    * @private
@@ -507,6 +548,7 @@ class PartageChasses {
       })
       .then((n) => {
         PartageChasses.oublierFloodsPartages(ids);
+        PartageChasses.noterARetirer(ids, false);
         AttaqueLancee.majPartages();
         if (n || !discret)
           $.toast({
@@ -518,11 +560,17 @@ class PartageChasses {
       })
       .catch((e) => {
         // pas de section de partage : rien à retirer, inutile de réessayer
-        if (e && e.message == "absente") PartageChasses.oublierFloodsPartages(ids);
-        $.toast({
-          ...TOAST_ERROR,
-          text: "Retrait du flood annulé impossible : le forum de l'alliance n'a pas pu être lu ou modifié.",
-        });
+        if (e && e.message == "absente") {
+          PartageChasses.oublierFloodsPartages(ids);
+          PartageChasses.noterARetirer(ids, false);
+        }
+        // retrait automatique : réessayé à la page suivante, sans message
+        if (discret) console.warn(`[${NOM_EXTENSION}] retrait des floods différé`, e);
+        else
+          $.toast({
+            ...TOAST_ERROR,
+            text: "Retrait du flood annulé impossible : le forum de l'alliance n'a pas pu être lu ou modifié.",
+          });
       })
       .finally(() => $bouton && $bouton.prop("disabled", false));
   }

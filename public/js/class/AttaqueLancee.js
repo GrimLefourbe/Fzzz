@@ -363,20 +363,22 @@ class AttaqueLancee {
    * @return {Promise}
    */
   static partagerMarquees() {
+    // déjà lancé sur cette page (reprise au chargement et liste des attaques)
+    if (AttaqueLancee.partageEnCours) return AttaqueLancee.partageEnCours;
     let marquees = AttaqueLancee.charger().filter((a) => a.partager && a.id);
-    if (!marquees.length) return (AttaqueLancee.partageEnCours = Promise.resolve());
+    if (!marquees.length) return Promise.resolve();
     // la marque n'est retirée qu'une fois le flood présent dans le forum : un
     // partage interrompu (page quittée, forum injoignable) est refait plus tard
-    return (AttaqueLancee.partageEnCours = PartageChasses.partagerFloods(marquees, null).then(
-      () => {
+    return (AttaqueLancee.partageEnCours = PartageChasses.partagerFloods(marquees, null)
+      .then(() => {
         let partages = PartageChasses.floodsPartages(),
           liste = AttaqueLancee.charger();
         liste.forEach((a) => {
           if (a.partager && partages[a.id]) delete a.partager;
         });
         AttaqueLancee.sauvegarder(liste);
-      },
-    ));
+      })
+      .finally(() => (AttaqueLancee.partageEnCours = null)));
   }
   /**
    * Heure d'arrivée arrondie à la minute, avec la date si ce n'est pas

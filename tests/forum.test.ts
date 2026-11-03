@@ -114,3 +114,41 @@ describe("retrait automatique des floods disparus de la liste", () => {
     expect(page.lire<string[]>("ECRITS")).toHaveLength(0);
   });
 });
+
+describe("retraits repris après une page quittée trop tôt", () => {
+  const preparer = (ecritureOk: boolean) =>
+    page.lire(`var ECRITS = []; var monProfil = { pseudo: "Moi" };
+      var Horloge = { serveur: () => moment("2026-11-03 12:00", "YYYY-MM-DD HH:mm") };
+      var PARTAGES_REPRIS = 0;
+      var AttaqueLancee = { majPartages() {}, partagerMarquees() { PARTAGES_REPRIS++; return Promise.resolve(); } };
+      $.toast = () => {}; var TOAST_SUCCESS = {}, TOAST_ERROR = {}, TOAST_INFO = {};
+      PartageChasses.sujets = () => Promise.resolve({ "Floods | moi": 5 });
+      PartageChasses._xajax = (fn, q) => {
+        if (fn != "envoiEditTopic") return Promise.resolve();
+        if (!${ecritureOk}) return Promise.reject(new Error("réseau"));
+        ECRITS.push(decodeURIComponent(q)); return Promise.resolve();
+      };
+      PartageChasses.lireSujet = () => Promise.resolve({ chasses: [], floods: [
+        { date: "2026-11-03 18:00", cible: "A", terrain: 100, id: 20 } ] });
+      localStorage.removeItem("fzzz_floodsARetirer");`);
+  const enAttente = () => page.lire<number[]>(`Utils.lireStockage("fzzz_floodsARetirer", [])`);
+
+  test("noté avant l'écriture, effacé une fois le forum modifié", async () => {
+    preparer(true);
+    const fin = page.lire(`PartageChasses.retirerFloods([20], null, true)`);
+    expect(enAttente()).toEqual([20]);
+    await fin;
+    expect(enAttente()).toEqual([]);
+  });
+  test("écriture échouée : gardé, puis repris au chargement d'une autre page", async () => {
+    preparer(false);
+    await page.lire(`PartageChasses.retirerFloods([20], null, true)`);
+    expect(enAttente()).toEqual([20]);
+    preparer(true);
+    page.lire(`localStorage.setItem("fzzz_floodsARetirer", "[20]")`);
+    await page.lire(`PartageChasses.reprendre()`);
+    expect(page.lire<string[]>("ECRITS")).toHaveLength(1);
+    expect(enAttente()).toEqual([]);
+    expect(page.lire("PARTAGES_REPRIS")).toBe(1);
+  });
+});
