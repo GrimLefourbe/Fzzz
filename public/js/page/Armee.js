@@ -9,6 +9,11 @@
  * @class PageArmee
  * @constructor
  */
+// valeurs des lieux dans le formulaire « Déplacer » du jeu
+const LIEU_ARMEE = { TERRAIN: 1, DOME: 2, LOGE: 3 };
+// numéro du jeu (uniteN) de chaque unité, dans l'ordre d'Armee.unite
+const CHOIX_UNITE_JEU = [1, 2, 3, 4, 5, 6, 14, 7, 8, 9, 10, 13, 11, 12];
+
 class PageArmee {
   constructor(boiteComptePlus) {
     /**
@@ -81,7 +86,7 @@ class PageArmee {
     AttaqueLancee.afficherTableaux();
     // Affichage du temps Hof de votre armée
     $(".simulateur:not(.o_blocAttaques):first").append(
-      "<tr><td colspan=10>Temps <span class='gras' title='Hall Of Fame' >HOF : " +
+      "<tr class='o_ligneHof'><td colspan=10>Temps <span class='gras' title='Hall Of Fame' >HOF : " +
         Utils.shortcutTime(
           this._armeeTdc.getTemps(0) + this._armeeDome.getTemps(0) + this._armeeLoge.getTemps(0),
         ) +
@@ -105,8 +110,8 @@ class PageArmee {
     // elle met en évidence le bouton de replacement, le joueur clique.
     // rechargement après un clic (Annuler, transfert…) : même position à l'écran
     Utils.garderPosition("fzzz_positionArmee");
-    // fin de flood : le replacement recharge la page, il attend que le partage
-    // des floods (« Flooder + partager ») soit écrit dans le forum
+    // fin de flood : le replacement attend que le partage des floods
+    // (« Flooder + partager ») soit écrit dans le forum
     if (floodFlag)
       Promise.resolve(AttaqueLancee.partageEnCours)
         .catch(() => {})
@@ -175,13 +180,24 @@ class PageArmee {
     this._armeeLoge = new Armee({ unite: unites });
   }
   /**
-   * Replace l'armée en respectant les bornes d'antisonde des paramètres.
+   * Replace l'armée : tout en loge (flèche « Tout déplacer ici » de la loge),
+   * puis les antisondes de la loge vers le terrain et vers le dôme, avec
+   * l'unité choisie dans les préférences. Requêtes du formulaire « Déplacer »
+   * du jeu, sans recharger la page : le tableau est mis à jour avec la réponse.
    * Quand auto=true (en sortie de flood, enchaîné au clic du joueur),
    * les toasts informatifs sont supprimés pour ne pas spammer à chaque visite.
    */
   replacerArmee(auto = false) {
     if (!this.uniteTransferables()) {
       if (!auto) $.toast({ ...TOAST_ERROR, text: "Aucune unité n'est transférable." });
+      return this;
+    }
+    if (this.indiceUniteReplacement() == -1) {
+      let choix = parseInt(monProfil.parametre["uniteReplacement"].valeur) || 0;
+      $.toast({
+        ...TOAST_ERROR,
+        text: `Aucune ${NOM_UNITE[choix]} dans l'armée : replacement impossible (unité choisie dans Préférences → Armée).`,
+      });
       return this;
     }
     let placer = this.placementPrevu();
@@ -208,29 +224,29 @@ class PageArmee {
    * @return {Function|null}
    */
   placementPrevu() {
-    let premiereUnite = this.indicePremiereUnite();
-    let nbUniteDispo =
-      this._armeeLoge.unite[premiereUnite] +
-      this._armeeDome.unite[premiereUnite] +
-      this._armeeTdc.unite[premiereUnite];
-    // si j'ai assez d'unité pour mettre les antisonde en param
-    if (
-      nbUniteDispo >=
-      monProfil.parametre["uniteAntisondeDome"].valeur +
-        monProfil.parametre["uniteAntisondeTerrain"].valeur
-    ) {
-      // si les unités en terrain et dome ne sont pas dans les bornes dasn antisonde on replace tout sinon on est bon
-      if (
-        !this.estPlacePourAntiSonde(
-          premiereUnite,
-          monProfil.parametre["uniteAntisondeTerrain"].valeur,
-          monProfil.parametre["uniteAntisondeDome"].valeur,
-        )
-      )
-        return () => this.placerAntisondeSuffisant(premiereUnite, nbUniteDispo);
-    } else if (!this.estPlacePourAntiSonde(premiereUnite, 1, nbUniteDispo * 0.3))
-      return () => this.placerAntisondeInsuffisant(premiereUnite, nbUniteDispo);
+    let i = this.indiceUniteReplacement();
+    if (i == -1) return null;
+    let dispo = this._armeeLoge.unite[i] + this._armeeDome.unite[i] + this._armeeTdc.unite[i],
+      terrain = monProfil.parametre["uniteAntisondeTerrain"].valeur,
+      dome = monProfil.parametre["uniteAntisondeDome"].valeur;
+    if (dispo >= terrain + dome) {
+      if (!this.estPlacePourAntiSonde(i, terrain, dome))
+        return () => this.replacer(i, PageArmee.tirer(terrain), PageArmee.tirer(dome));
+    } else if (!this.estPlacePourAntiSonde(i, 1, dispo * 0.3))
+      // pas assez d'unités pour les deux antisondes : 1 en terrain, 30 % en dôme
+      return () => this.replacer(i, 1, Math.round(dispo * 0.3));
     return null;
+  }
+  /**
+   * Nombre tiré entre 90 % du maximum et le maximum (antisonde moins prévisible).
+   *
+   * @static
+   * @method tirer
+   * @param {Number} max
+   * @return {Number}
+   */
+  static tirer(max) {
+    return Math.round(max * 0.9 + Math.random() * max * 0.1);
   }
   /**
    * Un transfert du replacement n'a pas eu de réponse (réseau, jeu occupé) :
@@ -248,19 +264,21 @@ class PageArmee {
     setTimeout(() => (location = "/Armee.php"), 2500);
   }
   /**
-   * Lance un replacement une seule fois par page : les transferts finissent
-   * par recharger Armee.php, et un double clic (ou un clic pendant le
+   * Un seul replacement à la fois : un double clic (ou un clic pendant le
    * replacement automatique) déplaçait les troupes deux fois.
    *
    * @private
    * @method lancerReplacement
-   * @param {Function} placer
+   * @param {Function} placer renvoie une promesse
    */
   lancerReplacement(placer) {
     if (this._replacementEnCours) return;
     this._replacementEnCours = true;
-    $("#o_replaceArmee").prop("disabled", true).text("Replacement…");
-    placer();
+    $("#o_replaceArmee").prop("disabled", true).removeClass("o_synchroPret").text("Replacement…");
+    Promise.resolve(placer()).finally(() => {
+      this._replacementEnCours = false;
+      $("#o_replaceArmee").prop("disabled", false).text("Replacer l'armée");
+    });
   }
   /**
    *
@@ -270,6 +288,18 @@ class PageArmee {
     for (let i = 0; i < this._armeeTdc.unite.length; i++)
       if (this._armeeTdc.unite[i] + this._armeeDome.unite[i] + this._armeeLoge.unite[i]) return i;
     return -1;
+  }
+  /**
+   * Unité des antisondes : celle des préférences, sinon la première disponible.
+   *
+   * @method indiceUniteReplacement
+   * @return {Integer} indice dans Armee.unite, -1 si l'armée n'en a pas
+   */
+  indiceUniteReplacement() {
+    let choix = parseInt(monProfil.parametre["uniteReplacement"].valeur) || 0;
+    if (!choix) return this.indicePremiereUnite();
+    let i = choix - 1;
+    return this._armeeTdc.unite[i] + this._armeeDome.unite[i] + this._armeeLoge.unite[i] ? i : -1;
   }
   /**
    *
@@ -301,93 +331,114 @@ class PageArmee {
     } else return false;
   }
   /**
+   * Valeur de l'unité dans la liste « Déplacer » du jeu (unite1…unite14,
+   * numérotation du jeu différente de l'ordre des unités).
    *
+   * @static
+   * @method valeurUnite
+   * @param {Integer} i indice dans Armee.unite
+   * @return {String}
    */
-  placerAntisondeSuffisant(indUnite, nbTroupeDispo) {
-    let securite = $("#t").attr("name") + "=" + $("#t").val();
-    $.post(location.origin + "/Armee.php?deplacement=3&" + securite, (data) => {
-      let correspondanceUnite = [1, 2, 3, 4, 5, 6, 14, 7, 8, 9, 10, 13, 11, 12];
-      // si on a pas assez de troupes on prend un nombre au hasard
-      let nbTroupes = Math.round(
-        Math.random() *
-          (monProfil.parametre["uniteAntisondeDome"].valeur -
-            monProfil.parametre["uniteAntisondeDome"].valeur * 0.9) +
-          monProfil.parametre["uniteAntisondeDome"].valeur * 0.9,
-      );
-      if (nbTroupeDispo < nbTroupes)
-        nbTroupes = Math.round(
-          Math.random() * (nbTroupeDispo - nbTroupeDispo * 0.9) + nbTroupeDispo * 0.9,
-        );
-      // on place l'antisonde en dome
-      $.post(
-        location.origin +
-          "/Armee.php?Transferer=Envoyer&LieuOrigine=3&LieuDestination=2&ChoixUnite=unite" +
-          correspondanceUnite[indUnite] +
-          "&nbTroupes=" +
-          nbTroupes +
-          "&" +
-          securite,
-        (data) => {
-          nbTroupeDispo -= nbTroupes;
-          nbTroupes = Math.round(
-            Math.random() *
-              (monProfil.parametre["uniteAntisondeTerrain"].valeur -
-                monProfil.parametre["uniteAntisondeTerrain"].valeur * 0.9) +
-              monProfil.parametre["uniteAntisondeTerrain"].valeur * 0.9,
-          );
-          // si on a pas assez de troupes on prend un nombre au hasard
-          if (nbTroupeDispo < nbTroupes)
-            nbTroupes = Math.round(
-              Math.random() * (nbTroupeDispo - nbTroupeDispo * 0.9) + nbTroupeDispo * 0.9,
-            );
-          $.post(
-            location.origin +
-              "/Armee.php?Transferer=Envoyer&LieuOrigine=3&LieuDestination=1&ChoixUnite=unite" +
-              correspondanceUnite[indUnite] +
-              "&nbTroupes=" +
-              nbTroupes +
-              "&" +
-              securite,
-            (data) => {
-              location = "/Armee.php";
-            },
-          ).fail(() => this.echecReplacement());
-        },
-      ).fail(() => this.echecReplacement());
-    }).fail(() => this.echecReplacement());
-    return this;
+  static valeurUnite(i) {
+    let option = $("#ChoixUnite option").filter((k, o) => o.textContent.trim() == NOM_UNITE[i + 1]);
+    return option.length ? option.val() : "unite" + CHOIX_UNITE_JEU[i];
   }
   /**
+   * Tout en loge, puis `terrain` puis `dome` unités d'indice `i` de la loge
+   * vers le terrain et vers le dôme ; tableau de la garnison remplacé par
+   * celui de la dernière réponse.
    *
+   * @method replacer
+   * @return {Promise}
    */
-  placerAntisondeInsuffisant(indUnite, nbTroupeDispo) {
-    let securite = $("#t").attr("name") + "=" + $("#t").val();
-    $.post(location.origin + "/Armee.php?deplacement=3&" + securite, (data) => {
-      let correspondanceUnite = [1, 2, 3, 4, 5, 6, 14, 7, 8, 9, 10, 13, 11, 12];
-      // on place l'antisonde en dome
-      $.post(
-        location.origin +
-          "/Armee.php?Transferer=Envoyer&LieuOrigine=3&LieuDestination=2&ChoixUnite=unite" +
-          correspondanceUnite[indUnite] +
-          "&nbTroupes=" +
-          Math.round(nbTroupeDispo * 0.3) +
-          "&" +
-          securite,
-        (data) => {
-          $.post(
-            location.origin +
-              "/Armee.php?Transferer=Envoyer&LieuOrigine=3&LieuDestination=1&ChoixUnite=unite" +
-              correspondanceUnite[indUnite] +
-              "&nbTroupes=1&" +
-              securite,
-            (data) => {
-              location = "/Armee.php";
-            },
-          ).fail(() => this.echecReplacement());
-        },
-      ).fail(() => this.echecReplacement());
-    }).fail(() => this.echecReplacement());
-    return this;
+  replacer(i, terrain, dome) {
+    let jeton = () => ({ [$("#t").attr("name")]: $("#t").val() }),
+      reponse = null,
+      etapes = [() => $.get("/Armee.php", { deplacement: 3, ...jeton() })];
+    [
+      [LIEU_ARMEE.TERRAIN, terrain],
+      [LIEU_ARMEE.DOME, dome],
+    ].forEach(([lieu, nb]) => {
+      if (nb > 0)
+        etapes.push(() =>
+          $.post("/Armee.php", {
+            ...jeton(),
+            nbTroupes: nb,
+            ChoixUnite: PageArmee.valeurUnite(i),
+            LieuOrigine: LIEU_ARMEE.LOGE,
+            LieuDestination: lieu,
+            Transferer: "Envoyer",
+          }),
+        );
+    });
+    return etapes
+      .reduce(
+        (suite, etape) =>
+          suite.then(() =>
+            Promise.resolve(etape()).then((html) => {
+              reponse = html;
+              // jeton du formulaire renouvelé par le jeu : repris pour la suite
+              let nouveau = Utils.parseHtml(html).find("#t").val();
+              if (nouveau) $("#t").val(nouveau);
+            }),
+          ),
+        Promise.resolve(),
+      )
+      .then(() => {
+        if (!this.remplacerGarnison(reponse)) {
+          location = "/Armee.php";
+          return;
+        }
+        let nom = NOM_UNITE[i + 1],
+          place =
+            this._armeeTdc.unite[i] == terrain &&
+            this._armeeDome.unite[i] == dome &&
+            this.uniteTransferables() == this._armeeLoge.getSommeUnite() + terrain + dome;
+        $.toast(
+          place
+            ? {
+                ...TOAST_SUCCESS,
+                text: `Armée replacée : ${numeral(terrain).format()} ${nom} en TdC, ${numeral(dome).format()} en dôme, le reste en loge.`,
+              }
+            : {
+                ...TOAST_WARNING,
+                text: "Le jeu n'a pas déplacé l'armée comme prévu : vérifie le tableau.",
+              },
+        );
+      })
+      .catch(() => this.echecReplacement());
+  }
+  /**
+   * Remplace le tableau de la garnison par celui d'une page Armée reçue, et
+   * refait ce que l'extension y ajoute. Les lignes de l'extension qui ne
+   * dépendent pas du lieu (bouton, temps HOF, statistiques) sont reprises.
+   *
+   * @method remplacerGarnison
+   * @param {String} html page Armee.php
+   * @return {Boolean} false si la réponse n'a pas de tableau de garnison
+   */
+  remplacerGarnison(html) {
+    let $nouvelle = Utils.parseHtml(html || "")
+        .find("table.simulateur")
+        .filter((k, t) => /Troupes en Garnison/.test(t.textContent))
+        .first(),
+      $actuelle = $(".simulateur:not(.o_blocAttaques):first");
+    if (!$nouvelle.length || !$actuelle.length) return false;
+    let $bouton = $("#o_replaceArmee").closest("tr").detach(),
+      $hof = $actuelle.find(".o_ligneHof").detach(),
+      $stat = $("#o_statArmee").closest("tr").detach();
+    $nouvelle = $(document.importNode($nouvelle[0], true)).addClass("o_blocArmee");
+    $actuelle.replaceWith($nouvelle);
+    $nouvelle.find("tr:eq(0)").after($bouton);
+    $nouvelle.append($hof, $stat);
+    this.recupereArmeeTdc();
+    this.recupereArmeeDome();
+    this.recupereArmeeLoge();
+    $nouvelle.find("h3:first").append(` (${numeral(this.uniteTransferables()).format()})`);
+    if (!Utils.comptePlus) this.flechesEtLignes();
+    this.libellesCourts((n) => $nouvelle[0].contains(n));
+    PageArmee.calerLargeurs();
+    return true;
   }
   /**
    * Ajoute les fonctionnalités du compte+. Affiche les infos sur l'armée et les fléches dans le tableau des unités.
@@ -396,7 +447,20 @@ class PageArmee {
    * @method plus
    */
   plus() {
-    // Affiche les fléches de deplacement des unités
+    this.flechesEtLignes();
+    // Affichage de l'arrivée + sauvegarde des attaques en cours
+    let listeAttaque = AttaqueLancee.enrichirLignes();
+    // Verification si les données sont deja enregistré
+    this.saveAttaque(listeAttaque);
+  }
+  /**
+   * Hors Compte+ : flèches de déplacement et lignes vie, attaque, défense et
+   * consommation par lieu, dans le tableau de la garnison.
+   *
+   * @private
+   * @method flechesEtLignes
+   */
+  flechesEtLignes() {
     $(".simulateur:not(.o_blocAttaques) td").each((i, elt) => {
       if (/^[0-9,]+$/.test($(elt).text().replace(/ /g, ""))) {
         let info = $(elt).find("span").attr("id").replace(/\(|\)/g, "");
@@ -450,10 +514,6 @@ class PageArmee {
     this.afficherLigneAttaque();
     this.afficherLigneDefense();
     this.afficherLigneConsommation();
-    // Affichage de l'arrivée + sauvegarde des attaques en cours
-    let listeAttaque = AttaqueLancee.enrichirLignes();
-    // Verification si les données sont deja enregistré
-    this.saveAttaque(listeAttaque);
   }
   /**
    * Affiche les informations supplémentaires sur la vie des armées.

@@ -9,6 +9,13 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.76.0",
+    notes: [
+      "Alerte de fin de ponte : nouveaux choix 12 h, 16 h et 24 h.",
+      "« Replacer l'armée » sans recharger la page : tout en loge, puis les antisondes (90 à 100 % des maximums des préférences) vers le TdC puis le dôme ; le tableau se met à jour. Unité des antisondes au choix dans Préférences → Armée (par défaut la première disponible).",
+    ],
+  },
+  {
     version: "1.75.0",
     notes: [
       "« Lancer + partager » sur chaque lieu, de la couleur du lieu choisi : l'attaque est publiée avec sa zone (Dôme ou Loge), affichée sans TdC pris dans les chronologies, la page Membres et les floods reçus. « Partager » aussi pour ces attaques dans « Mes attaques en cours ».",

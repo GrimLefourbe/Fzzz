@@ -60,7 +60,7 @@ const AFFICHAGES_CONVOIS = {
 };
 
 // Fzzz : seuils (s) du paramètre « alertePonte », dans l'ordre de ses choix
-const SEUILS_ALERTE_PONTE = [0, 900, 1800, 3600, 7200, 14400, 28800];
+const SEUILS_ALERTE_PONTE = [0, 900, 1800, 3600, 7200, 14400, 28800, 43200, 57600, 86400];
 // « Rétablir l'affichage d'origine » d'un onglet des préférences (+ id de l'onglet)
 const CLE_ORIGINE = "fzzz_origine_";
 // affichages qui ne dépendent pas de la page courante : coupés avec leur onglet

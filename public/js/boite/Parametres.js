@@ -89,6 +89,7 @@ class BoiteParametre extends Boite {
       "sondeLieu",
       "reserveFlood",
       "reserveFloodAuto",
+      "uniteReplacement",
       "replacerArmeeAuto",
       "ratioRecolte",
       "alertePonte",
@@ -274,10 +275,12 @@ class BoiteParametre extends Boite {
    */
   ongletArmee() {
     let p = monProfil.parametre;
+    p["uniteReplacement"].valeurPossible = ["Première disponible", ...NOM_UNITE.slice(1)];
     $("#o_tabsParametreArmee").append(`<form>
         ${this.cases("Armee")}
         <p class='o_titreParam'>Antisondes <span class='o_aideParam'>(nombre tiré entre 90 % du max et le max)</span></p>
         <div class='o_grilleParam'>${p["uniteAntisondeTerrain"].getForm("Max en terrain")}${p["uniteAntisondeDome"].getForm("Max en dôme")}</div>
+        ${p["uniteReplacement"].getForm("Unité des antisondes")}
         ${p["replacerArmeeAuto"].getForm("Signaler une armée à replacer à l'ouverture de la page Armée")}
       </form>`);
     return this;

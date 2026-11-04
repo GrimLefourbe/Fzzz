@@ -184,6 +184,14 @@ describe("réglage « alerte de fin de ponte »", () => {
     expect(valeur(null)).toBe(6);
     expect(valeur({ uniteSonde: 1 })).toBe(6);
   });
+  test("choix 12 h, 16 h et 24 h : un seuil par choix", () => {
+    const [choix, seuils] = profil.lire<[string[], number[]]>(
+      `[new Joueur({ pseudo: "Moi" }).parametre["alertePonte"].valeurPossible, SEUILS_ALERTE_PONTE]`,
+    );
+    expect(choix.slice(-3)).toEqual(["12 h", "16 h", "24 h"]);
+    expect(seuils.length).toBe(choix.length);
+    expect(seuils.slice(-3)).toEqual([12 * 3600, 16 * 3600, 24 * 3600]);
+  });
   test("valeur déjà enregistrée : gardée", () => {
     expect(valeur({ alertePonte: 3 })).toBe(3);
     expect(valeur({ alertePonte: 0 })).toBe(0);

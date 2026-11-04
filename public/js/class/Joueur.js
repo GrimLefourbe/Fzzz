@@ -136,6 +136,14 @@ class Joueur {
       "checkbox",
       true,
     );
+    // liste des unités posée à l'affichage des préférences (NOM_UNITE, content.js)
+    this._parametre["uniteReplacement"] = new Parametre(
+      "uniteReplacement",
+      "Unité des antisondes",
+      "select",
+      0,
+      [],
+    );
     this._parametre["replacerArmeeAuto"] = new Parametre(
       "replacerArmeeAuto",
       "Signaler l'armée à replacer (ouverture d'Armée)",
@@ -161,7 +169,7 @@ class Joueur {
       "Alerte quand la ponte se termine dans moins de",
       "select",
       6,
-      ["Désactivée", "15 min", "30 min", "1 h", "2 h", "4 h", "8 h"],
+      ["Désactivée", "15 min", "30 min", "1 h", "2 h", "4 h", "8 h", "12 h", "16 h", "24 h"],
     );
     this._parametre["affectationRessource"] = new Parametre(
       "affectationRessource",
