@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.78.1",
+    notes: [
+      "Page d'attaque : « Annuler » dans la liste du jeu n'envoie plus sur la page Ennemies ; l'attaque est annulée et tu restes sur la page d'attaque.",
+    ],
+  },
+  {
     version: "1.78.0",
     notes: [
       "Affichages plus rapides : les sujets du forum partagé lus pour les floods et chasses en cours (pages Armée, Membres, joueur) sont réutilisés pendant une minute d'une page à l'autre. Un nouveau partage d'un allié ou d'un autre appareil peut donc apparaître jusqu'à une minute plus tard ; les partages et retraits relisent toujours le forum.",

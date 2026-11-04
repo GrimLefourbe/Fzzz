@@ -173,3 +173,19 @@ describe("page d'attaque : sondes", () => {
     ]);
   });
 });
+
+describe("page d'attaque : Annuler dans la liste du jeu", () => {
+  test("le lien du jeu ne quitte pas la page : annulation en arrière-plan", async () => {
+    page.lire(`window.annulations = [];
+      AttaqueLancee.annulerSurPlace = ($lien) => annulations.push($lien.attr("href"));
+      document.body.innerHTML = '<h3>Attaque(s) en cours</h3>- Vous allez attaquer X <a id="annuler" href="/ennemie.php?annuler=208399">Annuler</a>';
+      // le reste de executer() demande toute la page du jeu : seul le lien compte ici
+      try { Object.create(PageAttaquer.prototype).executer(); } catch (e) {}`);
+    const clic = page.lire<boolean>(
+      `document.getElementById("annuler").dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }))`,
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    expect(clic).toBe(false);
+    expect(page.lire(`annulations.slice()`)).toEqual(["/ennemie.php?annuler=208399"]);
+  });
+});

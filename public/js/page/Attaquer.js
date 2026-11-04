@@ -217,6 +217,11 @@ class PageAttaquer {
     return { visibles, total: $lignes.length };
   }
   executer() {
+    // liste « Attaque(s) en cours » du jeu : annuler sans quitter la page d'attaque
+    $(document).on("click", "a[href*='ennemie.php?annuler=']", (e) => {
+      e.preventDefault();
+      AttaqueLancee.annulerSurPlace($(e.currentTarget));
+    });
     if ($("#tabChoixArmee").length) {
       // récupération de l'armée
       this._armee = new Armee({ unite: this.extraitArmee() });
