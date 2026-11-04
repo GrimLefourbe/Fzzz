@@ -9,6 +9,15 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.79.0",
+    notes: [
+      "Lanceur de flood : la colonne « Supp.* » s'appelle « Reste ».",
+      "Préférences → Armée : unité de l'antisonde au choix pour le terrain et pour le dôme séparément.",
+      "Préférences → Page membre : vue par défaut de la page Membres de l'alliance (Standard, Temps de trajet ou Floods et chasses en cours).",
+      "Page d'attaque : l'info-bulle de l'armée (HB/AB) n'apparaît que quand le pointeur est sur le tableau Armée.",
+    ],
+  },
+  {
     version: "1.78.1",
     notes: [
       "Page d'attaque : « Annuler » dans la liste du jeu n'envoie plus sur la page Ennemies ; l'attaque est annulée et tu restes sur la page d'attaque.",

@@ -272,18 +272,23 @@ class PageAttaquer {
             <tr><td>${IMG_DEF}</td><td>${numeral(tmp.getBaseDef()).format()}</td><td>${numeral(tmp.getTotalDef(monProfil.niveauRecherche[2])).format()}</td></tr>
             <tr><td><img alt="Nombre" src="images/icone/fourmi.png" height="18"/></td><td colspan="2" class="centre">${numeral(tmp.getSommeUnite()).format()}</td></tr>
             </table>`;
-    $("#formulaireChoixArmee fieldset:eq(1)")
-      .tooltip({
-        position: { my: "left+10", at: "right center" },
-        content: html,
-        items: "fieldset",
-        hide: { effect: "fade", duration: 10 },
-        tooltipClass: "ui-tooltip-right ui-tooltip-brown ui-tooltip-lightBrown",
-      })
-      .tooltip("open");
-    $("#formulaireChoixArmee fieldset:eq(1)").on("mouseout focusout", (e) => {
-      e.stopImmediatePropagation();
-    });
+    // info-bulle visible seulement quand le pointeur est sur le tableau Armée
+    let $tableau = $("#tabChoixArmee"),
+      $info = $("#o_statArmeeInfo"),
+      placer = () => $info.position({ my: "left+10 center", at: "right center", of: $tableau });
+    if (!$info.length) {
+      $info = $(
+        `<div id="o_statArmeeInfo" class="ui-tooltip ui-widget ui-corner-all ui-widget-content ui-tooltip-right ui-tooltip-brown ui-tooltip-lightBrown" style="display:none;position:absolute"><div class="ui-tooltip-content"></div></div>`,
+      ).appendTo("body");
+      $tableau
+        .on("mouseenter", () => {
+          $info.show();
+          placer();
+        })
+        .on("mouseleave", () => $info.hide());
+    }
+    $info.find(".ui-tooltip-content").html(html);
+    if ($info.is(":visible")) placer();
   }
   /**
    * Boutons de l'extension posés sous « Attaquer X ! » dès l'ouverture, et
@@ -569,14 +574,14 @@ class PageAttaquer {
     $(".simulateur:not(.o_blocAttaques):first")
       .append(`<fieldset id='o_prepaFlood' class='centre'><legend><span class='titre'>Lanceur de Flood</span> <span class='reduce'>(${creneaux} créneau${creneaux > 1 ? "x" : ""} libre${creneaux > 1 ? "s" : ""} sur ${monProfil.niveauRecherche[6] + 1})</span></legend>
             <table id='o_simulationFlood' class='o_maxWidth' cellspacing=0>
-			<tr class='gras'><td>Etape</td><td>Troupes</td><td>Supp.*</td><td>Mon Terrain</td><td>${this._cible.pseudo} (${Utils.intToTime(monProfil.getTempsParcours2(this._cible))})</td></tr>
+			<tr class='gras'><td>Etape</td><td>Troupes</td><td>Reste</td><td>Mon Terrain</td><td>${this._cible.pseudo} (${Utils.intToTime(monProfil.getTempsParcours2(this._cible))})</td></tr>
 			<tr><td><select id='o_methodeFlood'><option value='0' ${methode == 0 ? "selected" : ""}>${METHODE_FLOOD[0]}</option><option value='1' ${methode == 1 ? "selected" : ""}>${METHODE_FLOOD[1]}</option><option value='2' ${methode == 2 ? "selected" : ""}>${METHODE_FLOOD[2]}</option><option value='3' ${methode == 3 ? "selected" : ""}>${METHODE_FLOOD[3]}</option></select></td><td colspan="2"></td><td><input value='${Utils.terrain}' size='12' id='o_floodTDCA'/></td><td><input value='${this._cible.terrain}' size='12' id='o_floodTDCB'/></td></tr>
 			<tr><td>Antisonde (<span id="o_pourcentAttaque0">0</span>%)</td><td><input value='0' size='12' id='o_floodAntiSonde'/></td><td></td><td>${numeral(Utils.terrain).format()}</td><td>${numeral(this._cible.terrain).format()}</td></tr>
             <tr class="gras reduce"><td colspan="3"></td><td><span id="o_supprimeAttaque" class="souligne cursor" ${methode == 1 ? "style=display:none;" : ""}>Supprimer une attaque</span></td><td><span id="o_ajouteAttaque" class="souligne cursor" ${methode == 1 ? "style=display:none;" : ""}>Ajouter une attaque</span></td></tr>
             </table>
             <div class='o_pile'><button id='o_lanceFlood' class='o_button f_success'>Flooder</button>
             <button type='button' id='o_lanceFloodPartager' class='o_button f_info' title='Flood, puis publication des attaques dans le forum de la ${Utils.echapper(Utils.alliance || "l'alliance")}'>Flooder + partager</button></div>
-            <p class="reduce left">* : place les unités restantes sur l'attaque selectionnée.</p>
+            <p class="reduce left">Reste : place les unités restantes sur l'attaque sélectionnée.</p>
             </fieldset>`);
     $("#o_floodTDCA, #o_floodTDCB, #o_floodAntiSonde, input[id^='o_attaque']").spinner({
       min: 0,

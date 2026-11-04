@@ -954,6 +954,10 @@ form > .o_titreParam:first-child {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 0 16px;
 }
+/* antisondes : nombre maximum et unité côte à côte, terrain puis dôme */
+.o_grilleParam.o_grille2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 
 /* Commande - Rang */
 .o_rangForm,

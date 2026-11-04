@@ -89,7 +89,9 @@ class BoiteParametre extends Boite {
       "sondeLieu",
       "reserveFlood",
       "reserveFloodAuto",
-      "uniteReplacement",
+      "uniteAntisondeTerrainType",
+      "uniteAntisondeDomeType",
+      "vueMembres",
       "replacerArmeeAuto",
       "ratioRecolte",
       "alertePonte",
@@ -275,12 +277,13 @@ class BoiteParametre extends Boite {
    */
   ongletArmee() {
     let p = monProfil.parametre;
-    p["uniteReplacement"].valeurPossible = ["Première disponible", ...NOM_UNITE.slice(1)];
+    ["uniteAntisondeTerrainType", "uniteAntisondeDomeType"].forEach(
+      (cle) => (p[cle].valeurPossible = ["Première disponible", ...NOM_UNITE.slice(1)]),
+    );
     $("#o_tabsParametreArmee").append(`<form>
         ${this.cases("Armee")}
         <p class='o_titreParam'>Antisondes <span class='o_aideParam'>(nombre tiré entre 90 % du max et le max)</span></p>
-        <div class='o_grilleParam'>${p["uniteAntisondeTerrain"].getForm("Max en terrain")}${p["uniteAntisondeDome"].getForm("Max en dôme")}</div>
-        ${p["uniteReplacement"].getForm("Unité des antisondes")}
+        <div class='o_grilleParam o_grille2'>${p["uniteAntisondeTerrain"].getForm("Max en terrain")}${p["uniteAntisondeTerrainType"].getForm("Unité")}${p["uniteAntisondeDome"].getForm("Max en dôme")}${p["uniteAntisondeDomeType"].getForm("Unité")}</div>
         ${p["replacerArmeeAuto"].getForm("Signaler une armée à replacer à l'ouverture de la page Armée")}
       </form>`);
     return this;
@@ -420,7 +423,9 @@ class BoiteParametre extends Boite {
    * @method ongletMembre
    */
   ongletMembre() {
-    $("#o_tabsParametreMembre").append(`<form>${this.cases("Membre")}</form>`);
+    $("#o_tabsParametreMembre").append(
+      `<form>${this.cases("Membre")}${monProfil.parametre["vueMembres"].getForm("Vue par défaut de la page Membres de l'alliance")}</form>`,
+    );
     return this;
   }
   /**

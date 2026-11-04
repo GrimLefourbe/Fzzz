@@ -139,13 +139,27 @@ class Joueur {
       "checkbox",
       true,
     );
-    // liste des unités posée à l'affichage des préférences (NOM_UNITE, content.js)
-    this._parametre["uniteReplacement"] = new Parametre(
-      "uniteReplacement",
-      "Unité des antisondes",
+    // listes des unités posées à l'affichage des préférences (NOM_UNITE, content.js)
+    this._parametre["uniteAntisondeTerrainType"] = new Parametre(
+      "uniteAntisondeTerrainType",
+      "Unité de l'antisonde en terrain",
       "select",
       0,
       [],
+    );
+    this._parametre["uniteAntisondeDomeType"] = new Parametre(
+      "uniteAntisondeDomeType",
+      "Unité de l'antisonde en dôme",
+      "select",
+      0,
+      [],
+    );
+    this._parametre["vueMembres"] = new Parametre(
+      "vueMembres",
+      "Vue par défaut de la page Membres de l'alliance",
+      "select",
+      0,
+      ["Standard", "Temps de trajet", "Floods et chasses en cours"],
     );
     this._parametre["replacerArmeeAuto"] = new Parametre(
       "replacerArmeeAuto",
@@ -473,6 +487,11 @@ class Joueur {
     for (let cle in data)
       if (this._parametre[cle] && !COULEURS_FIXES.includes(cle))
         this._parametre[cle].valeur = data[cle];
+    // une seule unité d'antisonde (1.76 à 1.78) : reprise pour le terrain et le dôme
+    if (data && data.uniteReplacement != null)
+      ["uniteAntisondeTerrainType", "uniteAntisondeDomeType"].forEach((cle) => {
+        if (data[cle] == null) this._parametre[cle].valeur = data.uniteReplacement;
+      });
     return this;
   }
   /**

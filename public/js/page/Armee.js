@@ -216,49 +216,55 @@ class PageArmee {
    * @return {Function|null}
    */
   placementPrevu() {
-    let i = this.indiceUniteReplacement();
-    if (i == -1) return null;
-    let dispo = this._armeeLoge.unite[i] + this._armeeDome.unite[i] + this._armeeTdc.unite[i],
+    let iT = this.indiceUnite("uniteAntisondeTerrainType"),
+      iD = this.indiceUnite("uniteAntisondeDomeType");
+    if (iT == -1) return null;
+    let total = (k) =>
+        this._armeeLoge.unite[k] + this._armeeDome.unite[k] + this._armeeTdc.unite[k],
       terrain = monProfil.parametre["uniteAntisondeTerrain"].valeur,
       dome = monProfil.parametre["uniteAntisondeDome"].valeur,
-      assez = dispo >= terrain + dome;
-    // pas assez d'unités pour les deux antisondes : 1 en terrain, le reste
-    // en dôme dans la limite de son maximum
-    if (!assez) {
-      dome = Math.max(0, Math.min(dome, dispo - 1));
-      terrain = 1;
+      tirerT = true,
+      tirerD = true;
+    if (iT == iD) {
+      // même unité, pas assez pour les deux antisondes : 1 en terrain, le
+      // reste en dôme dans la limite de son maximum
+      if (total(iT) < terrain + dome) {
+        terrain = Math.min(1, terrain);
+        dome = Math.max(0, Math.min(dome, total(iT) - terrain));
+        tirerT = tirerD = false;
+      }
+    } else {
+      // unités différentes : chaque lieu au plus ce que l'armée a de son unité
+      if (total(iT) < terrain) [terrain, tirerT] = [total(iT), false];
+      if (total(iD) < dome) [dome, tirerD] = [total(iD), false];
     }
-    if (this.estPlacePourAntiSonde(i, terrain, dome)) return null;
-    let cible = (max) => (assez ? PageArmee.tirer(max) : max),
+    if (this.estPlacePourAntiSonde(iT, terrain, iD, dome)) return null;
+    let t0 = this._armeeTdc.unite[iT],
+      d0 = this._armeeDome.unite[iD],
+      dans = (n, max) => n <= max && n >= max * 0.9,
       autres =
-        this._armeeTdc.unite.some((n, k) => n > 0 && k != i) ||
-        this._armeeDome.unite.some((n, k) => n > 0 && k != i);
+        this._armeeTdc.unite.some((n, k) => n > 0 && k != iT) ||
+        this._armeeDome.unite.some((n, k) => n > 0 && k != iD),
+      t = !autres && dans(t0, terrain) ? t0 : tirerT ? PageArmee.tirer(terrain) : terrain,
+      d = !autres && dans(d0, dome) ? d0 : tirerD ? PageArmee.tirer(dome) : dome;
     // d'autres unités hors de la loge : tout en loge, puis les antisondes
-    if (autres) {
-      let t = cible(terrain),
-        d = cible(dome);
+    if (autres)
       return () =>
-        this.replacer(i, t, d, [
+        this.replacer(iT, t, iD, d, [
           { toutEnLoge: true },
-          { de: LIEU_ARMEE.LOGE, vers: LIEU_ARMEE.TERRAIN, nb: t },
-          { de: LIEU_ARMEE.LOGE, vers: LIEU_ARMEE.DOME, nb: d },
+          { i: iT, de: LIEU_ARMEE.LOGE, vers: LIEU_ARMEE.TERRAIN, nb: t },
+          { i: iD, de: LIEU_ARMEE.LOGE, vers: LIEU_ARMEE.DOME, nb: d },
         ]);
-    }
     // seules les antisondes sont dehors : on ne déplace que la différence, et
     // rien pour un lieu déjà dans ses bornes (90 % à 100 % du maximum)
-    let dans = (n, max) => n <= max && n >= max * 0.9,
-      tdc = this._armeeTdc.unite[i],
-      dom = this._armeeDome.unite[i],
-      t = dans(tdc, terrain) ? tdc : cible(terrain),
-      d = dans(dom, dome) ? dom : cible(dome),
-      ecart = (lieu, avant, apres) =>
+    let ecart = (i, lieu, avant, apres) =>
         apres < avant
-          ? { de: lieu, vers: LIEU_ARMEE.LOGE, nb: avant - apres }
-          : { de: LIEU_ARMEE.LOGE, vers: lieu, nb: apres - avant },
-      etapes = [ecart(LIEU_ARMEE.TERRAIN, tdc, t), ecart(LIEU_ARMEE.DOME, dom, d)]
+          ? { i, de: lieu, vers: LIEU_ARMEE.LOGE, nb: avant - apres }
+          : { i, de: LIEU_ARMEE.LOGE, vers: lieu, nb: apres - avant },
+      etapes = [ecart(iT, LIEU_ARMEE.TERRAIN, t0, t), ecart(iD, LIEU_ARMEE.DOME, d0, d)]
         // les retours en loge d'abord : la loge a alors de quoi fournir l'autre lieu
         .sort((x, y) => (y.vers == LIEU_ARMEE.LOGE) - (x.vers == LIEU_ARMEE.LOGE));
-    return () => this.replacer(i, t, d, etapes);
+    return () => this.replacer(iT, t, iD, d, etapes);
   }
   /**
    * Nombre tiré entre 90 % du maximum et le maximum (antisonde moins prévisible).
@@ -313,46 +319,35 @@ class PageArmee {
     return -1;
   }
   /**
-   * Unité des antisondes : celle des préférences si l'armée en a, sinon la
+   * Unité d'une antisonde : celle des préférences si l'armée en a, sinon la
    * première disponible.
    *
-   * @method indiceUniteReplacement
+   * @method indiceUnite
+   * @param {String} cle réglage « uniteAntisondeTerrainType » ou « uniteAntisondeDomeType »
    * @return {Integer} indice dans Armee.unite, -1 si l'armée est vide
    */
-  indiceUniteReplacement() {
-    let i = (parseInt(monProfil.parametre["uniteReplacement"].valeur) || 0) - 1;
+  indiceUnite(cle) {
+    let i = (parseInt(monProfil.parametre[cle].valeur) || 0) - 1;
     return i >= 0 && this._armeeTdc.unite[i] + this._armeeDome.unite[i] + this._armeeLoge.unite[i]
       ? i
       : this.indicePremiereUnite();
   }
   /**
+   * Armée bien placée : seulement l'unité `iT` en terrain et `iD` en dôme,
+   * chacune entre 90 % et 100 % de son nombre prévu.
    *
+   * @method estPlacePourAntiSonde
+   * @return {Boolean}
    */
-  estPlacePourAntiSonde(indUnite, nbUniteTerrain, nbUniteDome) {
-    if (indUnite != -1) {
-      // si on a des unites autres que la premiere en terrain ou dome on est mal place
-      for (let i = 0; i < this._armeeTdc.unite.length; i++) {
-        if (this._armeeTdc.unite[i] > 0 && i != indUnite) return false;
-        if (this._armeeDome.unite[i] > 0 && i != indUnite) return false;
-      }
-      // si on assez d'unite on doit respecter les bornes
-      if (
-        this._armeeTdc.unite[indUnite] +
-          this._armeeDome.unite[indUnite] +
-          this._armeeLoge.unite[indUnite] >=
-        nbUniteTerrain + nbUniteDome
-      ) {
-        // si la premiere unite n'est pas dans les bornes on est mal place
-        if (
-          this._armeeDome.unite[indUnite] > nbUniteDome ||
-          this._armeeDome.unite[indUnite] < nbUniteDome * 0.9 ||
-          this._armeeTdc.unite[indUnite] > nbUniteTerrain ||
-          this._armeeTdc.unite[indUnite] < nbUniteTerrain * 0.9
-        )
-          return false;
-      }
-      return true;
-    } else return false;
+  estPlacePourAntiSonde(iT, terrain, iD, dome) {
+    if (iT == -1) return false;
+    let dans = (n, max) => n <= max && n >= max * 0.9;
+    return (
+      this._armeeTdc.unite.every((n, k) => !n || k == iT) &&
+      this._armeeDome.unite.every((n, k) => !n || k == iD) &&
+      dans(this._armeeTdc.unite[iT], terrain) &&
+      dans(this._armeeDome.unite[iD], dome)
+    );
   }
   /**
    * Valeur de l'unité dans la liste « Déplacer » du jeu (unite1…unite14,
@@ -369,17 +364,19 @@ class PageArmee {
   }
   /**
    * Déplacements du formulaire « Déplacer » du jeu, l'un après l'autre, pour
-   * finir avec `terrain` et `dome` unités d'indice `i` en terrain et en dôme ;
-   * tableau de la garnison remplacé par celui de la dernière réponse.
+   * finir avec `terrain` unités d'indice `iT` en terrain et `dome` unités
+   * d'indice `iD` en dôme ; tableau de la garnison remplacé par celui de la
+   * dernière réponse.
    *
    * @method replacer
-   * @param {Integer} i indice dans Armee.unite
+   * @param {Integer} iT indice dans Armee.unite de l'antisonde en terrain
    * @param {Integer} terrain unités attendues en terrain à la fin
+   * @param {Integer} iD indice dans Armee.unite de l'antisonde en dôme
    * @param {Integer} dome unités attendues en dôme à la fin
-   * @param {Array<Object>} deplacements {toutEnLoge: true} ou {de, vers, nb}
+   * @param {Array<Object>} deplacements {toutEnLoge: true} ou {i, de, vers, nb}
    * @return {Promise}
    */
-  replacer(i, terrain, dome, deplacements) {
+  replacer(iT, terrain, iD, dome, deplacements) {
     let jeton = () => ({ [$("#t").attr("name")]: $("#t").val() }),
       reponse = null,
       etapes = deplacements
@@ -391,7 +388,7 @@ class PageArmee {
                 $.post("/Armee.php", {
                   ...jeton(),
                   nbTroupes: e.nb,
-                  ChoixUnite: PageArmee.valeurUnite(i),
+                  ChoixUnite: PageArmee.valeurUnite(e.i),
                   LieuOrigine: e.de,
                   LieuDestination: e.vers,
                   Transferer: "Envoyer",
@@ -416,16 +413,15 @@ class PageArmee {
           location = "/Armee.php";
           return;
         }
-        let nom = NOM_UNITE[i + 1],
-          place =
-            this._armeeTdc.unite[i] == terrain &&
-            this._armeeDome.unite[i] == dome &&
-            this.uniteTransferables() == this._armeeLoge.getSommeUnite() + terrain + dome;
+        let place =
+          this._armeeTdc.unite[iT] == terrain &&
+          this._armeeDome.unite[iD] == dome &&
+          this.uniteTransferables() == this._armeeLoge.getSommeUnite() + terrain + dome;
         $.toast(
           place
             ? {
                 ...TOAST_SUCCESS,
-                text: `Armée replacée : ${numeral(terrain).format()} ${nom} en TdC, ${numeral(dome).format()} en dôme, le reste en loge.`,
+                text: `Armée replacée : ${numeral(terrain).format()} ${NOM_UNITE[iT + 1]} en TdC, ${numeral(dome).format()} ${NOM_UNITE[iD + 1]} en dôme, le reste en loge.`,
               }
             : {
                 ...TOAST_WARNING,

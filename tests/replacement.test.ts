@@ -16,22 +16,23 @@ const page = creerPage(
 /** Replacement prévu : [indice d'unité, terrain, dôme] ou null si déjà placé. */
 function prevu(
   armee: { tdc?: object; dome?: object; loge?: object },
-  parametres: { terrain: number; dome: number; unite: number },
+  parametres: { terrain: number; dome: number; unite: number; uniteDome?: number },
 ) {
   return page.lire(`(() => {
-    localStorage.setItem("outiiil_parametre", JSON.stringify({ uniteAntisondeTerrain: ${parametres.terrain}, uniteAntisondeDome: ${parametres.dome}, uniteReplacement: ${parametres.unite} }));
+    localStorage.setItem("outiiil_parametre", JSON.stringify({ uniteAntisondeTerrain: ${parametres.terrain}, uniteAntisondeDome: ${parametres.dome}, uniteAntisondeTerrainType: ${parametres.unite}, uniteAntisondeDomeType: ${parametres.uniteDome ?? parametres.unite} }));
     window.monProfil = new Joueur({ pseudo: "Moi" }).getParametre();
     let p = Object.create(PageArmee.prototype), appel = null;
     p._armeeTdc = new Armee({ unite: ${JSON.stringify(armee.tdc || {})} });
     p._armeeDome = new Armee({ unite: ${JSON.stringify(armee.dome || {})} });
     p._armeeLoge = new Armee({ unite: ${JSON.stringify(armee.loge || {})} });
-    p.replacer = (i, t, d, etapes) => {
-      appel = [i, t, d];
+    p.replacer = (iT, t, iD, d, etapes) => {
+      appel = [iT, t, d];
+      window.uniteDome = iD;
       window.etapes = etapes.filter((e) => e.toutEnLoge || e.nb > 0);
     };
     let f = p.placementPrevu();
     if (f) f();
-    return [p.indiceUniteReplacement(), appel];
+    return [p.indiceUnite("uniteAntisondeTerrainType"), appel];
   })()`);
 }
 
@@ -124,5 +125,31 @@ describe("replacement de l'armée", () => {
       [3, 1],
       [3, 2],
     ]);
+  });
+  test("unités différentes en terrain et en dôme", () => {
+    const armee = { loge: { "Jeune Soldate Naine": 1000, "Naine d’Elite": 30 } };
+    const [, appel] = prevu(armee, { terrain: 100, dome: 50, unite: 1, uniteDome: 3 }) as [
+      number,
+      number[],
+    ];
+    expect(appel[0]).toBe(0);
+    expect(page.lire(`window.uniteDome`)).toBe(2);
+    expect(appel[1]).toBeGreaterThanOrEqual(90);
+    // 30 Naines d'Elite seulement : toutes en dôme
+    expect(appel[2]).toBe(30);
+    const e = page.lire(`window.etapes`);
+    expect(e.map((x: { i: number; vers: number }) => [x.i, x.vers])).toEqual([
+      [0, 1],
+      [2, 2],
+    ]);
+  });
+  test("ancien réglage unique repris pour le terrain et le dôme", () => {
+    expect(
+      page.lire(`(() => {
+        localStorage.setItem("outiiil_parametre", JSON.stringify({ uniteReplacement: 3 }));
+        let p = new Joueur({ pseudo: "Moi" }).getParametre().parametre;
+        return [p.uniteAntisondeTerrainType.valeur, p.uniteAntisondeDomeType.valeur];
+      })()`),
+    ).toEqual([3, 3]);
   });
 });

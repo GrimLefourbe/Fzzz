@@ -5,6 +5,8 @@
 
 // vue à rouvrir après le rechargement qui suit « Temps de trajet » synchronisé
 const CLE_VUE_APRES_SYNCHRO = "fzzz_vueMembresApresSynchro";
+// vues de la page Membres, dans l'ordre du réglage « vueMembres »
+const VUES_MEMBRES = ["reset", "trajet", "floods"];
 // colonnes ajoutées en fin de ligne au tableau des membres
 const ALLIANCE_COLONNES_FZZZ = ["Prochaine<br/>variation", "TdC<br/>(estimé)", "TdC<br/>final"];
 
@@ -124,10 +126,13 @@ class AllianceFzzz {
       appliquer(vue);
       return false;
     });
-    // toujours la vue Standard, sauf juste après « Temps de trajet » synchronisé
-    let initiale = "reset";
+    // vue choisie dans les préférences (« Temps de trajet » seulement si les
+    // coordonnées sont en cache : sinon il faudrait les lire), ou celle qui
+    // suit une synchronisation des temps de trajet
+    let parDefaut = VUES_MEMBRES[parseInt(monProfil.parametre["vueMembres"].valeur) || 0],
+      initiale = parDefaut == "trajet" && !avecTrajet ? "reset" : parDefaut;
     try {
-      initiale = sessionStorage.getItem(CLE_VUE_APRES_SYNCHRO) || "reset";
+      initiale = sessionStorage.getItem(CLE_VUE_APRES_SYNCHRO) || initiale;
       sessionStorage.removeItem(CLE_VUE_APRES_SYNCHRO);
     } catch (e) {}
     // largeur commune : celle de la vue la plus large, pour que l'encart ne
