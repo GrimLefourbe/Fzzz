@@ -108,6 +108,9 @@ describe("page d'attaque : sondes", () => {
     expect(couleurs()).toEqual(["o_lieu2", "o_lieu2", "aucune", "o_lieu2"]);
     ouvrir(undefined, { sondeUnite: 0, sondeQuantite: 1, sondeLieu: 3 });
     expect(couleurs()).toEqual(["o_lieu1", "o_lieu3", "aucune", "o_lieu1"]);
+    expect(page.lire(`$("#o_sonder").text()`)).toBe("Sonder (Loge)");
+    page.lire(`monProfil.parametre.sondeLieu.valeur = 0; $("#lieu").val("2").trigger("change")`);
+    expect(page.lire(`$("#o_sonder").text()`)).toBe("Sonder (Dôme)");
   });
   test("Sonder : sonde réglée, vers la liste ou le lieu des préférences, liste inchangée", () => {
     const armee: [string, string, string, string][] = [

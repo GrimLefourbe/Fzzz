@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.79.1",
+    notes: [
+      "Page d'attaque : le bouton « Sonder » indique sa destination : « Sonder (TdC) », « Sonder (Dôme) » ou « Sonder (Loge) ».",
+    ],
+  },
+  {
     version: "1.79.0",
     notes: [
       "Lanceur de flood : la colonne « Supp.* » s'appelle « Reste ».",

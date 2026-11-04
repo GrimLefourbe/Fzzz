@@ -13,6 +13,8 @@
 const PAGES_ENNEMIS_MAX = 40;
 // valeur de l'option « Terrain de Chasse » dans la liste Lieu du jeu (2 dôme, 3 loge)
 const LIEU_JEU_TERRAIN = 1;
+// nom court de chaque valeur de la liste Lieu, pour le bouton « Sonder »
+const ZONES_LIEU_JEU = { 1: "TdC", 2: "Dôme", 3: "Loge" };
 
 class PageAttaquer {
   constructor(boiteComptePlus) {
@@ -377,7 +379,8 @@ class PageAttaquer {
       $("input[name='ChoixArmee']:first, #o_lancerPartager"),
       parseInt($("#lieu").val()) || LIEU_JEU_TERRAIN,
     );
-    colorer($("#o_sonder"), this.lieuSonde());
+    let lieuSonde = this.lieuSonde();
+    colorer($("#o_sonder"), lieuSonde).text(`Sonder (${ZONES_LIEU_JEU[lieuSonde]})`);
   }
   /**
    * Unités présentes chez moi, d'après les colonnes Terrain, Fourmilière et
