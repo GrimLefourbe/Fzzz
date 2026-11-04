@@ -51,12 +51,14 @@ describe("replacement de l'armée", () => {
     expect((prevu(armee, { terrain: 10, dome: 0, unite: 3 }) as [number, number[]])[1][0]).toBe(2);
     expect((prevu(armee, { terrain: 10, dome: 0, unite: 0 }) as [number, number[]])[1][0]).toBe(0);
   });
-  test("unité choisie absente : rien de prévu", () => {
-    expect(
-      prevu({ loge: { "Jeune Soldate Naine": 1000 } }, { terrain: 10, dome: 5, unite: 2 }),
-    ).toEqual([-1, null]);
+  test("unité choisie absente : première unité disponible", () => {
+    const [, appel] = prevu(
+      { loge: { "Soldate Naine": 1000 } },
+      { terrain: 10, dome: 0, unite: 1 },
+    ) as [number, number[]];
+    expect(appel[0]).toBe(1);
   });
-  test("déjà placée : rien ; pas assez d'unités : 1 en terrain, 30 % en dôme", () => {
+  test("déjà placée : rien ; pas assez d'unités : 1 en terrain, le maximum possible en dôme", () => {
     expect(
       prevu(
         {
@@ -68,7 +70,16 @@ describe("replacement de l'armée", () => {
       ),
     ).toEqual([0, null]);
     expect(
-      prevu({ loge: { "Jeune Soldate Naine": 40 } }, { terrain: 100, dome: 50, unite: 0 }),
-    ).toEqual([0, [0, 1, 12]]);
+      prevu(
+        { tdc: { "Jeune Soldate Naine": 1 }, dome: { "Jeune Soldate Naine": 39 } },
+        { terrain: 100, dome: 50, unite: 0 },
+      ),
+    ).toEqual([0, null]);
+    const peu = { loge: { "Jeune Soldate Naine": 40 } };
+    expect(prevu(peu, { terrain: 100, dome: 50, unite: 0 })).toEqual([0, [0, 1, 39]]);
+    expect(prevu(peu, { terrain: 100, dome: 20, unite: 0 })).toEqual([0, [0, 1, 20]]);
+    expect(
+      prevu({ loge: { "Jeune Soldate Naine": 1 } }, { terrain: 100, dome: 20, unite: 0 }),
+    ).toEqual([0, [0, 1, 0]]);
   });
 });

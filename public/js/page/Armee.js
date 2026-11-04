@@ -192,14 +192,6 @@ class PageArmee {
       if (!auto) $.toast({ ...TOAST_ERROR, text: "Aucune unité n'est transférable." });
       return this;
     }
-    if (this.indiceUniteReplacement() == -1) {
-      let choix = parseInt(monProfil.parametre["uniteReplacement"].valeur) || 0;
-      $.toast({
-        ...TOAST_ERROR,
-        text: `Aucune ${NOM_UNITE[choix]} dans l'armée : replacement impossible (unité choisie dans Préférences → Armée).`,
-      });
-      return this;
-    }
     let placer = this.placementPrevu();
     if (placer) this.lancerReplacement(placer);
     else if (!auto) $.toast({ ...TOAST_INFO, text: "Votre armée est déjà placée correctement." });
@@ -232,9 +224,12 @@ class PageArmee {
     if (dispo >= terrain + dome) {
       if (!this.estPlacePourAntiSonde(i, terrain, dome))
         return () => this.replacer(i, PageArmee.tirer(terrain), PageArmee.tirer(dome));
-    } else if (!this.estPlacePourAntiSonde(i, 1, dispo * 0.3))
-      // pas assez d'unités pour les deux antisondes : 1 en terrain, 30 % en dôme
-      return () => this.replacer(i, 1, Math.round(dispo * 0.3));
+    } else {
+      // pas assez d'unités pour les deux antisondes : 1 en terrain, le reste
+      // en dôme dans la limite de son maximum
+      let auDome = Math.max(0, Math.min(dome, dispo - 1));
+      if (!this.estPlacePourAntiSonde(i, 1, auDome)) return () => this.replacer(i, 1, auDome);
+    }
     return null;
   }
   /**
@@ -290,16 +285,17 @@ class PageArmee {
     return -1;
   }
   /**
-   * Unité des antisondes : celle des préférences, sinon la première disponible.
+   * Unité des antisondes : celle des préférences si l'armée en a, sinon la
+   * première disponible.
    *
    * @method indiceUniteReplacement
-   * @return {Integer} indice dans Armee.unite, -1 si l'armée n'en a pas
+   * @return {Integer} indice dans Armee.unite, -1 si l'armée est vide
    */
   indiceUniteReplacement() {
-    let choix = parseInt(monProfil.parametre["uniteReplacement"].valeur) || 0;
-    if (!choix) return this.indicePremiereUnite();
-    let i = choix - 1;
-    return this._armeeTdc.unite[i] + this._armeeDome.unite[i] + this._armeeLoge.unite[i] ? i : -1;
+    let i = (parseInt(monProfil.parametre["uniteReplacement"].valeur) || 0) - 1;
+    return i >= 0 && this._armeeTdc.unite[i] + this._armeeDome.unite[i] + this._armeeLoge.unite[i]
+      ? i
+      : this.indicePremiereUnite();
   }
   /**
    *
@@ -315,7 +311,7 @@ class PageArmee {
       if (
         this._armeeTdc.unite[indUnite] +
           this._armeeDome.unite[indUnite] +
-          this._armeeLoge.unite[indUnite] >
+          this._armeeLoge.unite[indUnite] >=
         nbUniteTerrain + nbUniteDome
       ) {
         // si la premiere unite n'est pas dans les bornes on est mal place

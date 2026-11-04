@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.76.1",
+    notes: [
+      "« Replacer l'armée » : si l'unité choisie pour les antisondes manque, la première unité disponible est utilisée ; s'il n'y a pas assez d'unités pour les deux maximums, 1 en TdC et le maximum possible en dôme (dans la limite de son maximum).",
+    ],
+  },
+  {
     version: "1.76.0",
     notes: [
       "Alerte de fin de ponte : nouveaux choix 12 h, 16 h et 24 h.",
