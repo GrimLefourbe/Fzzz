@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.71.0",
+    notes: [
+      "Boîte « Extension OUAF » : message en rouge si Toolzzz ou Outiiil est active en même temps (les deux extensions se gênent).",
+    ],
+  },
+  {
     version: "1.70.3",
     notes: [
       "Partage des floods : un partage ou un retrait du forum interrompu par un changement de page est repris automatiquement au chargement de la page suivante, quelle qu'elle soit.",

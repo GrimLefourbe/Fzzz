@@ -2,6 +2,8 @@
 const ECART_ENCADRES = 6;
 // « Désactiver l'extension » : lu aussi par bootstrap.js, avant l'affichage
 const CLE_DESACTIVEE = "fzzz_desactivee";
+// Toolzzz et Outiiil (dont Fzzz descend) ajoutent leur barre d'outils avec cet id, hors de notre encadré
+const ID_BARRE_TOOLZZZ = "o_toolbarOutiiil";
 
 /**
  * Classe pour la gestion des différents outils globals à fourmizzz.
@@ -68,6 +70,7 @@ class Dock {
       } catch (err) {}
       location.reload();
     });
+    Dock.signalerAutreExtension($boite);
     // evenement sur le clic d'un item de la boite d'outil
     $(".o_toolbarOutil").click((e) => {
       switch ($(e.currentTarget).find(".o_toolbarItem span").attr("id")) {
@@ -84,6 +87,32 @@ class Dock {
           break;
       }
     });
+  }
+  /**
+   * Toolzzz ou Outiiil active en même temps (les deux se gênent : mêmes id,
+   * mêmes modifications des pages) ; elle peut s'afficher après nous.
+   *
+   * @static
+   * @method autreExtension
+   * @return {Boolean}
+   */
+  static autreExtension() {
+    return [...document.querySelectorAll(`[id="${ID_BARRE_TOOLZZZ}"]`)].some(
+      (e) => !e.closest("#o_boiteExtension"),
+    );
+  }
+  static signalerAutreExtension($boite) {
+    let verifier = () => {
+      if ($boite.find(".o_autreExtension").length || !Dock.autreExtension()) return;
+      $boite
+        .find(".contenu_boite_compte_plus")
+        .append(
+          `<div class="o_autreExtension">Toolzzz ou Outiiil est aussi active : désactive-la, les deux extensions se gênent.</div>`,
+        );
+    };
+    verifier();
+    $(window).on("load", verifier);
+    [1000, 3000].forEach((ms) => setTimeout(verifier, ms));
   }
   /**
    * Remonte visuellement l'encadré Compte+ (translation, sans toucher à la

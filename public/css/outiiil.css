@@ -663,6 +663,13 @@ html:not(.o_origineGenerale) #recherche {
   padding: 2px 0;
   cursor: pointer;
 }
+.o_autreExtension {
+  color: #c00;
+  font-weight: bold;
+  font-size: 11px;
+  text-align: center;
+  padding: 2px 0;
+}
 .o_versionExtension {
   font-size: 0.7em;
   opacity: 0.75;
