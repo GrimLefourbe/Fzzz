@@ -223,11 +223,11 @@ class PageAttaquer {
       $("input[id^=unite]").on("input", (e) => {
         this.majStatistique();
       });
+      this.ajouterBoutons();
       // on recupére le profil du joueur pour les coordonnées
       this._cible.getProfil().then((data) => {
         this._cible.chargerProfil(data);
-        // affichage des options avancées de lancement de l'armée
-        this.ajouterOption();
+        this.activerBoutons();
         // ajoute des outils de floods
         this.formulaireFlood();
       });
@@ -277,27 +277,78 @@ class PageAttaquer {
     });
   }
   /**
+   * Boutons de l'extension posés sous « Attaquer X ! » dès l'ouverture, et
+   * inactifs jusqu'au profil de la cible : rien n'apparaît ensuite au-dessus
+   * ou à la place du bouton du jeu, un doigt qui le vise ne peut pas tomber
+   * sur un autre bouton. Aucun bouton ne change le lieu choisi par le joueur.
    *
+   * @private
+   * @method ajouterBoutons
    */
-  ajouterOption() {
-    // on deplace le bouton standarf à droite
-    $("input[name='ChoixArmee']").unwrap().wrap("<div id='o_btnLancer' class='right'></div>");
-    $("#o_btnLancer").append(
-      `<button type='button' id='o_lancerPartager' class='o_button f_info' title='Lance l&#39;attaque comme le bouton du jeu, puis la publie dans le forum de la ${Utils.echapper(Utils.alliance || "l'alliance")} (partage des floods)'>Lancer + partager</button>`,
-    );
-    // partage des floods : terrain de chasse seulement (lieu 1)
-    let majPartager = () => $("#o_lancerPartager").toggle($("#lieu").val() == "1");
+  ajouterBoutons() {
+    const titrePartager = `Lance l'attaque comme le bouton du jeu, puis la publie dans le forum de la ${Utils.alliance || "l'alliance"} (partage des floods). Terrain de chasse seulement.`;
+    const titreSync = `Affiche le compte à rebours, au dixième de seconde et en heure du serveur + latence, jusqu'au moment où l'attaque arrivera sur une minute pleine (utile pour synchroniser plusieurs attaques avec des alliés). À zéro, c'est à toi de cliquer sur le bouton du jeu.`;
+    $("input[name='ChoixArmee']")
+      .first()
+      .after(
+        `<div id="o_btnLancer"><button type="button" id="o_lancerPartager" class="o_button f_info" title="${Utils.echapper(titrePartager)}" disabled>Lancer + partager</button><button type="button" id="o_synchro" class="o_button f_info" title="${Utils.echapper(titreSync)}" disabled>Synchroniser</button></div>${Utils.affichage("trajet") ? `<p class="centre reduce">Temps de trajet : <span id="o_tempsTrajet" class="gras">…</span></p>` : ""}<p class="centre reduce ligne_paire">Votre armée rentrera le <span id="o_retourArmee" class="gras">…</span> (RC : <span id="o_retourArmeeRC" class="gras">…</span>).</p>`,
+      );
+    // ligne du compte à rebours réservée dès l'affichage : la lancer ne
+    // décale pas le reste de la page
+    if (!$("#o_syncA").length)
+      $("#formulaireChoixArmee fieldset:eq(1)").append(
+        "<p id='o_syncA' class='centre o_syncReserve'>&nbsp;</p>",
+      );
+    // partage des floods : terrain de chasse seulement (lieu 1) ; masqué sans
+    // libérer sa place, pour que rien ne bouge quand le lieu change
+    let terrainChoisi = () => $("#lieu").val() == "1",
+      majPartager = () => $("#o_lancerPartager").css("visibility", terrainChoisi() ? "" : "hidden");
     $("#lieu").on("change", majPartager);
     majPartager();
-    $("#o_lancerPartager").on("click", () => {
+    $("#o_lancerPartager").on("click", (e) => {
+      if (e.currentTarget.disabled) return;
+      // relu au clic : le navigateur peut remettre une ancienne valeur dans la
+      // liste sans événement « change »
+      if (!terrainChoisi()) {
+        majPartager();
+        $.toast({
+          ...TOAST_ERROR,
+          text: "« Lancer + partager » n'envoie que sur le Terrain de chasse : rien n'a été envoyé.",
+        });
+        return;
+      }
+      // un seul envoi par clic, même en double-cliquant
+      $(e.currentTarget).prop("disabled", true);
       // le submit part pendant click() : la capture lit l'option à ce moment
       this._partagerEnvoi = true;
       $("input[name='ChoixArmee']")[0].click();
       this._partagerEnvoi = false;
     });
+    // page reprise par « Précédent » : le bouton désactivé par le clic revient actif
+    window.addEventListener("pageshow", (e) => {
+      if (e.persisted && this._pret) $("#o_lancerPartager").prop("disabled", false);
+    });
+    $("#o_synchro").on("click", (e) => {
+      e.preventDefault();
+      $("#o_synchro").prop("disabled", true);
+      this.lancerSynchro(this._cible.attenteSynchro());
+      return false;
+    });
+  }
+  /**
+   * Profil de la cible lu : trajet, retour, capture des envois et boutons actifs.
+   *
+   * @private
+   * @method activerBoutons
+   */
+  activerBoutons() {
+    let trajet = monProfil.getTempsParcours2(this._cible);
+    $("#o_tempsTrajet").text(Utils.duree(trajet));
+    $("#o_retourArmee").text(Horloge.clic().add(trajet, "s").format("D MMM à HH[h]mm[m]ss[s]"));
+    $("#o_retourArmeeRC").text(Utils.roundMinute(trajet, Horloge.clic()).format("D MMM à HH[h]mm"));
+    Utils.incrementTime(trajet, "o_retourArmee", "o_retourArmeeRC");
     // Capture de l'attaque au moment de l'envoi pour le récapitulatif par
-    // cible. Hook sur le submit du formulaire : couvre le clic sur le bouton,
-    // la touche Entrée, et les lancements programmés (Synchroniser / Sonder).
+    // cible : bouton du jeu, « Lancer + partager » et touche Entrée.
     $("input[name='ChoixArmee']")
       .closest("form")
       .on("submit", () => {
@@ -308,63 +359,8 @@ class PageAttaquer {
           { terrain: this._cible.terrain, partager: this._partagerEnvoi },
         );
       });
-    // Ajout du bouton pour la synchro simple
-    // Ajout du temps de trajet
-    const nbSonde = monProfil.parametre["uniteSonde"].valeur;
-    const titleSync = `Affiche le compte à rebours, au dixième de seconde et en heure du serveur + latence, jusqu'au moment où l'attaque arrivera sur une minute pleine (utile pour synchroniser plusieurs attaques avec des alliés). À zéro, c'est à toi de cliquer sur Lancer.`;
-    const titleSonde = `Prépare ${nbSonde} unité${nbSonde > 1 ? "s" : ""} de la première espèce disponible (configurable dans Paramètres → Attaque) et affiche le compte à rebours de la minute pleine — révèle le nombre de défenseurs ennemis sans engager toute l'armée. À zéro, c'est à toi de cliquer sur Lancer.`;
-    const titleSondeDirect = `Comme Sonder mais sans attendre la minute pleine : envoi immédiat, au clic. Utile quand le timing n'a pas d'importance.`;
-    $("#o_btnLancer")
-      .before(
-        `<div id="o_btnSynchro"><button id='o_synchro' class="o_button f_info" title="${titleSync}">Synchroniser</button><button id='o_sonder' class="o_button f_error" title="${titleSonde}">Sonder</button><button id='o_sonderDirect' class="o_button f_error" title="${titleSondeDirect}">Sonder direct</button></div>`,
-      )
-      .after(
-        `${Utils.affichage("trajet") ? `<p class="centre reduce">Temps de trajet : <span id="o_tempsTrajet" class="gras">${Utils.duree(monProfil.getTempsParcours2(this._cible))}</span></p>` : ""}<p class="centre reduce ligne_paire">Votre armée rentrera le <span id="o_retourArmee" class="gras">${Horloge.clic().add(monProfil.getTempsParcours2(this._cible), "s").format("D MMM à HH[h]mm[m]ss[s]")}</span> (RC : <span id="o_retourArmeeRC" class="gras">${Utils.roundMinute(monProfil.getTempsParcours2(this._cible), Horloge.clic()).format("D MMM à HH[h]mm")}</span>).</p>`,
-      );
-    // ligne du compte à rebours réservée dès l'affichage : la lancer ne
-    // décale pas le reste de la page
-    if (!$("#o_syncA").length)
-      $("#formulaireChoixArmee fieldset:eq(1)").append(
-        "<p id='o_syncA' class='centre o_syncReserve'>&nbsp;</p>",
-      );
-    $("#o_synchro").click((e) => {
-      e.preventDefault();
-      $("#o_btnSynchro button").prop("disabled", true);
-      this.lancerSynchro(this._cible.attenteSynchro());
-      return false;
-    });
-    // Remplit le formulaire avec une sonde (1ʳᵉ espèce dispo × paramètre uniteSonde)
-    const remplirFormulaireSonde = () => {
-      let premiereUnite = true;
-      $("#lieu").val(3);
-      majPartager();
-      for (let i = 1; i < 15; i++)
-        if ($("#unite" + i).length) {
-          $("#unite" + i).val(premiereUnite ? monProfil.parametre["uniteSonde"].valeur : 0);
-          premiereUnite = false;
-        }
-    };
-    // Sonde synchronisée (arrive sur la minute pleine)
-    $("#o_sonder").click((e) => {
-      e.preventDefault();
-      $("#o_btnSynchro button").prop("disabled", true);
-      remplirFormulaireSonde();
-      this.lancerSynchro(this._cible.attenteSynchro());
-      return false;
-    });
-    // Sonde directe (envoi immédiat, pas de synchro)
-    $("#o_sonderDirect").click((e) => {
-      e.preventDefault();
-      $("#o_btnSynchro button").prop("disabled", true);
-      remplirFormulaireSonde();
-      $("input[name='ChoixArmee']").click();
-      return false;
-    });
-    Utils.incrementTime(
-      monProfil.getTempsParcours2(this._cible),
-      "o_retourArmee",
-      "o_retourArmeeRC",
-    );
+    this._pret = true;
+    $("#o_btnLancer button").prop("disabled", false);
   }
   /**
    *
@@ -390,7 +386,7 @@ class PageAttaquer {
       } else {
         $("#o_syncA").html("<b>Clique sur Lancer maintenant.</b>").addClass("red");
         // cadre autour des deux boutons de lancement ; focus sans faire défiler la page
-        $("#o_btnLancer").addClass("o_synchroPret");
+        $("input[name='ChoixArmee']:first, #o_lancerPartager").addClass("o_synchroPret");
         $("input[name='ChoixArmee']").first()[0]?.focus({ preventScroll: true });
       }
     };

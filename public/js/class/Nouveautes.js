@@ -9,6 +9,13 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.72.0",
+    notes: [
+      "Page d'attaque : boutons « Sonder » et « Sonder direct » retirés (ils passaient le lieu en Loge Impériale). Le bouton du jeu « Attaquer » ne bouge plus : « Lancer + partager » et « Synchroniser » s'affichent dessous dès l'ouverture de la page.",
+      "« Lancer + partager » n'envoie que sur le Terrain de chasse (vérifié au clic) et une seule fois par clic.",
+    ],
+  },
+  {
     version: "1.71.0",
     notes: [
       "Boîte « Extension OUAF » : message en rouge si Toolzzz ou Outiiil est active en même temps (les deux extensions se gênent).",

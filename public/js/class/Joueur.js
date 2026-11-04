@@ -115,7 +115,6 @@ class Joueur {
       "number",
       0,
     );
-    this._parametre["uniteSonde"] = new Parametre("uniteSonde", "Sonde vers l'ennemi", "number", 0);
     this._parametre["reserveFlood"] = new Parametre(
       "reserveFlood",
       "Réserve d'unités au flood",

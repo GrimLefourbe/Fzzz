@@ -84,7 +84,6 @@ class BoiteParametre extends Boite {
       "methodeFlood",
       "uniteAntisondeTerrain",
       "uniteAntisondeDome",
-      "uniteSonde",
       "reserveFlood",
       "reserveFloodAuto",
       "replacerArmeeAuto",
@@ -287,9 +286,8 @@ class BoiteParametre extends Boite {
     let p = monProfil.parametre;
     $("#o_tabsParametreAttaque").append(`<form>
         ${this.cases("Attaque")}
-        <p class='o_titreParam'>Flood et sonde</p>
+        <p class='o_titreParam'>Flood</p>
         ${p["methodeFlood"].getForm("Méthode de flood par défaut")}
-        ${p["uniteSonde"].getForm("Unités envoyées en sonde")}
         ${p["reserveFlood"].getForm(
           "Unités gardées au flood (réserve)",
           `<label class='o_aideParam'><input id='reserveFloodAuto' type='checkbox' ${p["reserveFloodAuto"].valeur ? "checked" : ""}/> = antisondes terrain + dôme</label>`,

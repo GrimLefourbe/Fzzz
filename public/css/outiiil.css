@@ -1235,18 +1235,18 @@ hr.o_scSepar {
 #o_simulationFlood tr {
   height: 22px;
 }
-#o_btnSynchro,
+/* sous le bouton du jeu, même largeur que lui (200 px en ligne dans le jeu) */
 #o_btnLancer {
-  display: inline-block;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
 }
-#o_btnLancer {
-  float: right;
-}
-#o_synchro {
-  margin-top: 10px;
-}
-#o_sonder {
-  margin-left: 10px;
+#o_btnLancer .o_button {
+  width: 200px;
+  box-sizing: border-box;
+  margin: 0;
 }
 #o_tableStatArmee td:nth-child(2) {
   padding-left: 10px;
@@ -2261,7 +2261,6 @@ html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
   #o_partageAlliance,
   .o_attaquesBoutons,
   .o_syntheseBoutons,
-  #o_btnSynchro,
   .o_analyseLigne {
     flex-wrap: wrap !important;
   }
@@ -2270,12 +2269,6 @@ html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
   .o_syntheseBoutons .o_button,
   .o_attaquesLancees .o_button {
     white-space: normal;
-  }
-  #o_btnSynchro,
-  #o_btnLancer {
-    display: block;
-    float: none !important;
-    text-align: center;
   }
   /* page Membres : le tableau défile dans son cadre, largeur fixe désactivée */
   html:not(.o_desactivee) #tabMembresAlliance_wrapper {
@@ -2319,14 +2312,6 @@ html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
   #o_floodTDCB,
   #o_simulationFlood input {
     max-width: 6.5em;
-  }
-  #o_btnSynchro {
-    white-space: normal;
-    width: auto !important;
-  }
-  #o_btnSynchro .o_button,
-  #o_btnLancer input {
-    margin: 2px;
   }
   /* infobulle : sous le doigt, dans l'écran */
   #o_allInfobulle {
@@ -2498,34 +2483,18 @@ html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
   list-style: disc;
   margin: 0 !important;
 }
-/* bouton de lancement et son « + partager » empilés, même largeur,
-   « + partager » en haut (column-reverse : il suit le bouton dans le HTML) */
-.o_pile,
-#o_btnLancer {
+/* « Flooder » et son « + partager » empilés, même largeur, « + partager » en
+   haut (column-reverse : il suit le bouton dans le HTML) */
+.o_pile {
   display: inline-flex;
   flex-direction: column-reverse;
   align-items: stretch;
   gap: 4px;
   vertical-align: top;
 }
-.o_pile .o_button,
-#o_btnLancer .o_button {
+.o_pile .o_button {
   margin-left: 0;
   margin-right: 0;
-}
-/* le jeu met margin-top: 10px en ligne sur son bouton : reportée sur la pile */
-#o_btnLancer {
-  padding-top: 10px;
-}
-#o_btnLancer input[name="ChoixArmee"] {
-  margin-top: 0 !important;
-}
-@media (max-width: 760px) {
-  #o_btnLancer {
-    display: flex;
-    width: fit-content;
-    margin: 0 auto;
-  }
 }
 /* page Armée : déplacement d'armée resserré */
 .o_deplacerArmee h3 {
