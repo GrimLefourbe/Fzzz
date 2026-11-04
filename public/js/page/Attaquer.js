@@ -11,6 +11,8 @@
  */
 // garde-fou : pages de résultats chargées au plus par « Charger toutes les pages »
 const PAGES_ENNEMIS_MAX = 40;
+// valeur de l'option « Terrain de Chasse » dans la liste Lieu du jeu (2 dôme, 3 loge)
+const LIEU_JEU_TERRAIN = 1;
 
 class PageAttaquer {
   constructor(boiteComptePlus) {
@@ -289,11 +291,13 @@ class PageAttaquer {
    */
   ajouterBoutons() {
     const titrePartager = `Lance l'attaque comme le bouton du jeu, puis la publie dans le forum de la ${Utils.alliance || "l'alliance"} (partage des floods). Terrain de chasse seulement.`;
+    const titreSonder = `Envoie tout de suite la sonde réglée dans Préférences → Attaque (par défaut 1 Jeune Soldate Naine), vers le lieu de sonde des préférences ou, à défaut, celui de la liste. Couleur : vert terrain, orange dôme, rouge loge.`;
+    const titreSynchroSonde = `Prépare la sonde dans le formulaire et affiche le compte à rebours jusqu'à la minute pleine. À zéro, c'est à toi de cliquer sur Sonder.`;
     const titreSync = `Affiche le compte à rebours, au dixième de seconde et en heure du serveur + latence, jusqu'au moment où l'attaque arrivera sur une minute pleine (utile pour synchroniser plusieurs attaques avec des alliés). À zéro, c'est à toi de cliquer sur le bouton du jeu.`;
     $("input[name='ChoixArmee']")
       .first()
       .after(
-        `<div id="o_btnLancer"><button type="button" id="o_lancerPartager" class="o_button f_info" title="${Utils.echapper(titrePartager)}" disabled>Lancer + partager</button><button type="button" id="o_synchro" class="o_button f_info" title="${Utils.echapper(titreSync)}" disabled>Synchroniser</button></div>${Utils.affichage("trajet") ? `<p class="centre reduce">Temps de trajet : <span id="o_tempsTrajet" class="gras">…</span></p>` : ""}<p class="centre reduce ligne_paire">Votre armée rentrera le <span id="o_retourArmee" class="gras">…</span> (RC : <span id="o_retourArmeeRC" class="gras">…</span>).</p>`,
+        `<div id="o_btnLancer"><button type="button" id="o_lancerPartager" class="o_button f_info" title="${Utils.echapper(titrePartager)}" disabled>Lancer + partager</button><button type="button" id="o_sonder" class="o_button o_boutonLieu" title="${Utils.echapper(titreSonder)}" disabled>Sonder</button><button type="button" id="o_synchro" class="o_button f_info" title="${Utils.echapper(titreSync)}" disabled>Synchroniser</button><button type="button" id="o_synchroSonde" class="o_button o_boutonLieu" title="${Utils.echapper(titreSynchroSonde)}" disabled>Synchro sonde</button></div>${Utils.affichage("trajet") ? `<p class="centre reduce">Temps de trajet : <span id="o_tempsTrajet" class="gras">…</span></p>` : ""}<p class="centre reduce ligne_paire">Votre armée rentrera le <span id="o_retourArmee" class="gras">…</span> (RC : <span id="o_retourArmeeRC" class="gras">…</span>).</p>`,
       );
     // ligne du compte à rebours réservée dès l'affichage : la lancer ne
     // décale pas le reste de la page
@@ -305,8 +309,12 @@ class PageAttaquer {
     // libérer sa place, pour que rien ne bouge quand le lieu change
     let terrainChoisi = () => $("#lieu").val() == "1",
       majPartager = () => $("#o_lancerPartager").css("visibility", terrainChoisi() ? "" : "hidden");
-    $("#lieu").on("change", majPartager);
+    $("#lieu").on("change", () => {
+      majPartager();
+      this.majCouleurs();
+    });
     majPartager();
+    this.majCouleurs();
     $("#o_lancerPartager").on("click", (e) => {
       if (e.currentTarget.disabled) return;
       // relu au clic : le navigateur peut remettre une ancienne valeur dans la
@@ -336,6 +344,158 @@ class PageAttaquer {
       this.lancerSynchro(this._cible.attenteSynchro());
       return false;
     });
+    $("#o_sonder").on("click", (e) => {
+      if (!e.currentTarget.disabled) this.sonder();
+    });
+    $("#o_synchroSonde").on("click", (e) => {
+      if (e.currentTarget.disabled || !this.preparerSonde()) return;
+      $("#o_synchro, #o_synchroSonde").prop("disabled", true);
+      this.lancerSynchro(this._cible.attenteSynchro(), $("#o_sonder"), "Sonder");
+    });
+  }
+  /**
+   * Lieu où part la sonde : celui des préférences, sinon celui de la liste.
+   * La liste du jeu n'est jamais modifiée.
+   *
+   * @private
+   * @method lieuSonde
+   * @return {Number} 1 terrain, 2 dôme, 3 loge
+   */
+  lieuSonde() {
+    return (
+      parseInt(monProfil.parametre["sondeLieu"].valeur) ||
+      parseInt($("#lieu").val()) ||
+      LIEU_JEU_TERRAIN
+    );
+  }
+  /**
+   * Couleur du lieu visé : vert terrain, orange dôme, rouge loge. Bouton du
+   * jeu d'après la liste, boutons de sonde d'après le lieu de sonde.
+   *
+   * @private
+   * @method majCouleurs
+   */
+  majCouleurs() {
+    let colorer = ($b, lieu) => $b.removeClass("o_lieu1 o_lieu2 o_lieu3").addClass("o_lieu" + lieu);
+    colorer($("input[name='ChoixArmee']").first(), parseInt($("#lieu").val()) || LIEU_JEU_TERRAIN);
+    colorer($(".o_boutonLieu"), this.lieuSonde());
+  }
+  /**
+   * Unités présentes chez moi, d'après les colonnes Terrain, Fourmilière et
+   * Loge du formulaire (le champ Armée peut avoir été modifié).
+   *
+   * @static
+   * @method unitesDisponibles
+   * @return {Object} {nom d'unité: {id du champ, nb}}
+   */
+  static unitesDisponibles() {
+    let dispo = {};
+    $("#tabChoixArmee tr").each((i, tr) => {
+      let $td = $(tr).children("td"),
+        $champ = $(tr).find("input[id^='unite']");
+      if (!$champ.length || $td.length < 4) return;
+      let nb = [1, 2, 3].reduce(
+        (somme, k) => somme + (parseInt($td.eq(k).text().replace(/\D/g, "")) || 0),
+        0,
+      );
+      if (nb > 0) dispo[$td.eq(0).text().trim()] = { id: $champ.attr("id"), nb };
+    });
+    return dispo;
+  }
+  /**
+   * Sonde à envoyer : l'unité des préférences, au plus la quantité réglée ;
+   * si je n'en ai pas, une seule unité de la moins chère à produire.
+   *
+   * @static
+   * @method compositionSonde
+   * @param {Object} dispo résultat de unitesDisponibles
+   * @param {String} nom unité choisie dans les préférences
+   * @param {Number} quantite quantité choisie dans les préférences
+   * @return {{nom: String, id: String, nb: Number}|null} null : aucune troupe
+   */
+  static compositionSonde(dispo, nom, quantite) {
+    if (dispo[nom])
+      return { nom, id: dispo[nom].id, nb: Math.max(1, Math.min(quantite, dispo[nom].nb)) };
+    let rang = (n) => NOM_UNITE.indexOf(n),
+      noms = Object.keys(dispo)
+        .filter((n) => rang(n) > 0)
+        .sort(
+          (a, b) =>
+            COUT_UNITE[rang(a)] - COUT_UNITE[rang(b)] || VIE_UNITE[rang(a)] - VIE_UNITE[rang(b)],
+        );
+    return noms.length ? { nom: noms[0], id: dispo[noms[0]].id, nb: 1 } : null;
+  }
+  /**
+   * Remplit le formulaire avec la sonde seule, sans toucher à la liste Lieu.
+   *
+   * @private
+   * @method preparerSonde
+   * @return {{nom: String, id: String, nb: Number}|null}
+   */
+  preparerSonde() {
+    let p = monProfil.parametre,
+      sonde = PageAttaquer.compositionSonde(
+        PageAttaquer.unitesDisponibles(),
+        NOM_UNITE[(parseInt(p["sondeUnite"].valeur) || 0) + 1],
+        parseInt(p["sondeQuantite"].valeur) || 1,
+      );
+    if (!sonde) {
+      $.toast({ ...TOAST_ERROR, text: "Pas de troupe disponible : aucune sonde envoyée." });
+      return null;
+    }
+    $("#tabChoixArmee input[id^='unite']").each((i, champ) => {
+      champ.value = champ.id == sonde.id ? String(sonde.nb) : "0";
+    });
+    this.majStatistique();
+    this.majCouleurs();
+    return sonde;
+  }
+  /**
+   * Envoie la sonde vers le lieu de sonde (la liste du jeu reste telle
+   * quelle), puis recharge la page pour l'afficher dans la liste du jeu.
+   *
+   * @private
+   * @method sonder
+   */
+  sonder() {
+    let sonde = this.preparerSonde();
+    if (!sonde) return;
+    let lieu = this.lieuSonde(),
+      $boutons = $("#o_sonder, #o_synchroSonde").prop("disabled", true),
+      jeton = $("#t:last"),
+      donnees = {
+        [jeton.attr("name")]: jeton.val(),
+        ChoixArmee: "1",
+        lieu: String(lieu),
+        pseudoCible: $("input[name=pseudoCible]").val(),
+      };
+    $("#tabChoixArmee input[id^='unite']").each((i, champ) => {
+      donnees[champ.name] = champ.id == sonde.id ? sonde.nb : 0;
+    });
+    $.post($("#formulaireChoixArmee").attr("action"), donnees)
+      .done((data) => {
+        let reponse = Utils.parseHtml(data).find("center:last").text().trim();
+        if (reponse.indexOf("Vos troupes sont en marche") == -1) {
+          $boutons.prop("disabled", false);
+          $.toast({ ...TOAST_ERROR, text: reponse || "Le jeu a refusé la sonde." });
+          return;
+        }
+        AttaqueLancee.enregistrer(
+          this._cible.pseudo,
+          $(`#lieu option[value='${lieu}']`).text().trim(),
+          { [sonde.nom]: sonde.nb },
+          { html: data, terrain: this._cible.terrain },
+        );
+        location.href = location.pathname + location.search;
+      })
+      // sans réponse, la sonde est peut-être partie : pas de nouvel essai
+      .fail(() =>
+        $.toast({
+          ...TOAST_ERROR,
+          hideAfter: false,
+          text: "Le jeu n'a pas répondu : vérifie tes attaques en cours avant de sonder à nouveau.",
+        }),
+      );
   }
   /**
    * Profil de la cible lu : trajet, retour, capture des envois et boutons actifs.
@@ -365,16 +525,22 @@ class PageAttaquer {
     $("#o_btnLancer button").prop("disabled", false);
   }
   /**
-   *
+   * @param {Number} attente secondes avant de cliquer
+   * @param {Object} $bouton (jQuery) bouton à cliquer à zéro ; défaut : ceux du jeu et « Lancer + partager »
+   * @param {String} libelle nom de ce bouton dans le texte du compte à rebours
    */
-  lancerSynchro(attente) {
+  lancerSynchro(
+    attente,
+    $bouton = $("input[name='ChoixArmee']:first, #o_lancerPartager"),
+    libelle = "Lancer",
+  ) {
     // Règlement du s5 : le clic final appartient au joueur. L'extension affiche
     // seulement le compte à rebours et signale le moment de cliquer.
     // Compte à rebours au dixième, en heure serveur + latence : un réglage de
     // la latence pendant le décompte est pris en compte.
     let cible = Horloge.clic().valueOf() + attente * 1000,
       arrivee = Horloge.clic().add(attente, "s").add(monProfil.getTempsParcours2(this._cible), "s");
-    let texte = `Clique sur <b>Lancer</b> dans : <span id='o_decSyncA' class='gras'></span> (arrivée ${arrivee.format("HH[h]mm[m]ss[s]")}, latence ${Horloge.libelleLatence()}).`;
+    let texte = `Clique sur <b>${libelle}</b> dans : <span id='o_decSyncA' class='gras'></span> (arrivée ${arrivee.format("HH[h]mm[m]ss[s]")}, latence ${Horloge.libelleLatence()}).`;
     if ($("#o_syncA").length) $("#o_syncA").removeClass("red").html(texte);
     else
       $("#formulaireChoixArmee fieldset:eq(1)").append(
@@ -386,10 +552,10 @@ class PageAttaquer {
         $("#o_decSyncA").text((reste / 1000).toFixed(1).replace(".", ",") + " s");
         setTimeout(tic, Math.min(100, reste));
       } else {
-        $("#o_syncA").html("<b>Clique sur Lancer maintenant.</b>").addClass("red");
-        // cadre autour des deux boutons de lancement ; focus sans faire défiler la page
-        $("input[name='ChoixArmee']:first, #o_lancerPartager").addClass("o_synchroPret");
-        $("input[name='ChoixArmee']").first()[0]?.focus({ preventScroll: true });
+        $("#o_syncA").html(`<b>Clique sur ${libelle} maintenant.</b>`).addClass("red");
+        // cadre autour du ou des boutons à cliquer ; focus sans faire défiler la page
+        $bouton.addClass("o_synchroPret");
+        $bouton.first()[0]?.focus({ preventScroll: true });
       }
     };
     tic();

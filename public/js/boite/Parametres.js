@@ -84,6 +84,9 @@ class BoiteParametre extends Boite {
       "methodeFlood",
       "uniteAntisondeTerrain",
       "uniteAntisondeDome",
+      "sondeUnite",
+      "sondeQuantite",
+      "sondeLieu",
       "reserveFlood",
       "reserveFloodAuto",
       "replacerArmeeAuto",
@@ -284,6 +287,7 @@ class BoiteParametre extends Boite {
    */
   ongletAttaque() {
     let p = monProfil.parametre;
+    p["sondeUnite"].valeurPossible = NOM_UNITE.slice(1);
     $("#o_tabsParametreAttaque").append(`<form>
         ${this.cases("Attaque")}
         <p class='o_titreParam'>Flood</p>
@@ -292,6 +296,10 @@ class BoiteParametre extends Boite {
           "Unités gardées au flood (réserve)",
           `<label class='o_aideParam'><input id='reserveFloodAuto' type='checkbox' ${p["reserveFloodAuto"].valeur ? "checked" : ""}/> = antisondes terrain + dôme</label>`,
         )}
+        <p class='o_titreParam'>Sonder</p>
+        ${p["sondeUnite"].getForm("Unité envoyée en sonde")}
+        ${p["sondeQuantite"].getForm("Nombre d'unités (au plus)")}
+        ${p["sondeLieu"].getForm("Lieu de sonde")}
       </form>`);
     return this;
   }

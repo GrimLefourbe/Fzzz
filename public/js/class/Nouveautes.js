@@ -9,6 +9,13 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.74.0",
+    notes: [
+      "Page d'attaque : le bouton « Attaquer » prend la couleur du lieu choisi (vert terrain, orange dôme, rouge loge).",
+      "Boutons « Sonder » (envoi immédiat) et « Synchro sonde » (compte à rebours, c'est toi qui cliques sur Sonder). Ils ne changent jamais la liste Lieu : la sonde part vers le lieu réglé dans Préférences → Attaque → Sonder, ou à défaut celui de la liste. Unité et nombre réglables (par défaut 1 Jeune Soldate Naine) ; sans cette unité, 1 unité de la moins chère disponible.",
+    ],
+  },
+  {
     version: "1.73.1",
     notes: [
       "Lanceur de flood, méthode « Optimisée » : plus d'attaque de 0 ou −1 unité quand la cible est déjà à la limite de portée, ni de petite attaque inutile quand le reste de l'armée ne dépasse pas 20 % du terrain de la cible (tout part d'un coup, même terrain pris).",

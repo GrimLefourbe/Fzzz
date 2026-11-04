@@ -115,6 +115,15 @@ class Joueur {
       "number",
       0,
     );
+    // liste des unités posée à l'affichage des préférences (NOM_UNITE, content.js)
+    this._parametre["sondeUnite"] = new Parametre("sondeUnite", "Unité de sonde", "select", 0, []);
+    this._parametre["sondeQuantite"] = new Parametre("sondeQuantite", "Sonde", "number", 1);
+    this._parametre["sondeLieu"] = new Parametre("sondeLieu", "Lieu de sonde", "select", 0, [
+      "Celui de la liste Lieu",
+      "Terrain de chasse",
+      "Fourmilière (dôme)",
+      "Loge impériale",
+    ]);
     this._parametre["reserveFlood"] = new Parametre(
       "reserveFlood",
       "Réserve d'unités au flood",
