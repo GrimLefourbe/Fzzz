@@ -60,7 +60,7 @@ describe("page d'attaque : boutons sous celui du jeu", () => {
     page.lire(`p.activerBoutons()`);
     expect(etat().desactive).toBe(false);
   });
-  test("« Lancer + partager » : terrain de chasse seulement, une fois par clic", () => {
+  test("« Lancer + partager » : une fois par clic", () => {
     ouvrir();
     page.lire(
       `p.activerBoutons(); $("#o_lancerPartager")[0].click(); $("#o_lancerPartager")[0].click(); $("#o_lancerPartager").click();`,
@@ -68,17 +68,20 @@ describe("page d'attaque : boutons sous celui du jeu", () => {
     expect(etat().envois).toEqual([{ lieu: "Terrain de Chasse", partager: true }]);
     expect(etat().desactive).toBe(true);
   });
-  test("lieu passé en loge (même sans événement) : masqué, rien n'est envoyé", () => {
-    ouvrir();
-    page.lire(`p.activerBoutons(); $("#lieu").val("3").trigger("change");`);
-    expect(etat().partager).toBe("hidden");
-    // valeur remise par le navigateur sans « change »
-    ouvrir();
-    page.lire(`p.activerBoutons(); $("#lieu").val("3"); $("#o_lancerPartager").click();`);
-    const e = etat();
-    expect(e.envois).toEqual([]);
-    expect(e.toasts.length).toBe(1);
-    expect(e.partager).toBe("hidden");
+  test("« Lancer + partager » sur chaque lieu, partagé avec le lieu de la liste", () => {
+    for (const [valeur, lieu] of [
+      ["2", "Fourmilière"],
+      ["3", "Loge Impériale"],
+    ]) {
+      ouvrir();
+      page.lire(
+        `p.activerBoutons(); $("#lieu").val("${valeur}"); $("#o_lancerPartager")[0].click();`,
+      );
+      const e = etat();
+      expect(e.partager).not.toBe("hidden");
+      expect(e.envois).toEqual([{ lieu, partager: true }]);
+      expect(e.toasts).toEqual([]);
+    }
   });
   test("le bouton du jeu envoie le lieu choisi, sans partage", () => {
     ouvrir();
@@ -97,13 +100,14 @@ const couleurs = () =>
   );
 
 describe("page d'attaque : sondes", () => {
-  test("couleur du lieu : bouton du jeu d'après la liste, sondes d'après le lieu de sonde", () => {
+  test("couleur du lieu : boutons d'envoi d'après la liste, Sonder d'après le lieu de sonde", () => {
+    // [Attaquer, Sonder, Synchro sonde (n'envoie rien : couleur fixe), Lancer + partager]
     ouvrir();
-    expect(couleurs()).toEqual(["o_lieu1", "o_lieu1", "o_lieu1", "aucune"]);
+    expect(couleurs()).toEqual(["o_lieu1", "o_lieu1", "aucune", "o_lieu1"]);
     page.lire(`$("#lieu").val("2").trigger("change")`);
-    expect(couleurs()).toEqual(["o_lieu2", "o_lieu2", "o_lieu2", "aucune"]);
+    expect(couleurs()).toEqual(["o_lieu2", "o_lieu2", "aucune", "o_lieu2"]);
     ouvrir(undefined, { sondeUnite: 0, sondeQuantite: 1, sondeLieu: 3 });
-    expect(couleurs()).toEqual(["o_lieu1", "o_lieu3", "o_lieu3", "aucune"]);
+    expect(couleurs()).toEqual(["o_lieu1", "o_lieu3", "aucune", "o_lieu1"]);
   });
   test("Sonder : sonde réglée, vers la liste ou le lieu des préférences, liste inchangée", () => {
     const armee: [string, string, string, string][] = [

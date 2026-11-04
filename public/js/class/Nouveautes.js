@@ -9,6 +9,14 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.75.0",
+    notes: [
+      "« Lancer + partager » sur chaque lieu, de la couleur du lieu choisi : l'attaque est publiée avec sa zone (Dôme ou Loge), affichée sans TdC pris dans les chronologies, la page Membres et les floods reçus. « Partager » aussi pour ces attaques dans « Mes attaques en cours ».",
+      "« Synchro sonde » garde la couleur de « Synchroniser » (aucun des deux n'envoie d'attaque).",
+      "Une attaque en dôme ou en loge ne baisse plus le TdC estimé de la cible pour les floods suivants.",
+    ],
+  },
+  {
     version: "1.74.0",
     notes: [
       "Page d'attaque : le bouton « Attaquer » prend la couleur du lieu choisi (vert terrain, orange dôme, rouge loge).",

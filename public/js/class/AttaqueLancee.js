@@ -272,6 +272,9 @@ class AttaqueLancee {
   static estimerTerrain(capture, base) {
     capture.terrainDepart = base > 0 ? base : null;
     if (capture.terrainDepart === null) return (capture.terrainCible = null);
+    // dôme ou loge : un combat, le TdC de la cible ne change pas
+    if (["Dôme", "Loge"].includes(AttaqueLancee.zoneLieu(capture.lieu)))
+      return (capture.terrainCible = base);
     let nb = Object.values(capture.unite).reduce((somme, n) => somme + (n || 0), 0);
     return (capture.terrainCible = base - Math.min(nb, Math.floor(base * 0.2)));
   }
@@ -578,11 +581,7 @@ class AttaqueLancee {
         <td class="o_troupesCourtes" title="${AttaqueLancee.troupes(a) || "Détail inconnu (attaque lancée depuis un autre navigateur)"}">${AttaqueLancee.quantite(a)}</td>
         <td class="o_lieuAttaque" title="${AttaqueLancee.lieu(a) || "Lieu inconnu"}">${AttaqueLancee.lieuCourt(a)}</td>
         <td class="o_priseAttaque" data-i="${i}">${AttaqueLancee.priseEstimee(a)}</td>
-        <td class="o_attaqueActions"><button type="button" class="o_button o_attaqueCopier" data-i="${i}" title="Copier le détail de l'attaque">Copier</button>${
-          /terrain/i.test(AttaqueLancee.lieu(a) || "")
-            ? `<button type="button" class="o_button f_info o_attaquePartager" data-i="${i}" data-id="${a.ligne.id}" title="Partager ce flood avec la ${tag}">Partager</button>`
-            : ""
-        }<span id="${id}Annuler${i}" class="o_attaqueAnnuler"></span></td></tr>`;
+        <td class="o_attaqueActions"><button type="button" class="o_button o_attaqueCopier" data-i="${i}" title="Copier le détail de l'attaque">Copier</button><button type="button" class="o_button f_info o_attaquePartager" data-i="${i}" data-id="${a.ligne.id}" title="Partager cette attaque avec la ${tag}">Partager</button><span id="${id}Annuler${i}" class="o_attaqueAnnuler"></span></td></tr>`;
     });
     html += `</tbody></table>`;
     // boutons groupés sur la ligne du titre : une rangée de moins
@@ -1114,10 +1113,22 @@ class AttaqueLancee {
    */
   static lieuCourt(a) {
     let lieu = AttaqueLancee.lieu(a) || "";
+    return AttaqueLancee.zoneLieu(lieu) || lieu || "?";
+  }
+  /**
+   * Zone d'un libellé de lieu du jeu (« Loge Impériale », « Fourmilière »…).
+   *
+   * @static
+   * @method zoneLieu
+   * @param {String} lieu
+   * @return {String|null} "TdC", "Dôme", "Loge", ou null si inconnu
+   */
+  static zoneLieu(lieu) {
+    lieu = lieu || "";
     if (/terrain/i.test(lieu)) return "TdC";
     if (/d[ôo]me|fourmili/i.test(lieu)) return "Dôme";
     if (/loge/i.test(lieu)) return "Loge";
-    return lieu || "?";
+    return null;
   }
   /**
    * Troupes d'une attaque : capture, sinon texte du jeu (C+), sinon null.

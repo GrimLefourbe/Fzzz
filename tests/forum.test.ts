@@ -152,3 +152,84 @@ describe("retraits repris après une page quittée trop tôt", () => {
     expect(page.lire("PARTAGES_REPRIS")).toBe(1);
   });
 });
+
+describe("attaques en dôme ou en loge partagées", () => {
+  const page2 = creerPage(
+    ["js/class/Utils.js", "js/class/AttaqueLancee.js", "js/page/PartageChasses.js"],
+    `var Horloge = { serveur: () => moment("2026-11-04 12:00", "YYYY-MM-DD HH:mm") };`,
+  );
+  test("ligne sans « cm² », relue avec sa zone, sans TdC pris", async () => {
+    const ligne = page2.lire<string>(
+      `PartageChasses._ligne("Floods", { date: "2026-11-04 21:30", cible: "Spike", unites: 20000, terrain: 0, tdcCible: 93059, id: 77, lieu: "Loge" })`,
+    );
+    expect(ligne).toBe("04/11/26 21:30 | Spike | Loge | 20 000 unités | TdC 93 059 | #77");
+    page2.lire(`PartageChasses._xajax = () => Promise.resolve(null);
+      PartageChasses._html = () => ${JSON.stringify(
+        ligne +
+          "<br>04/11/26 21:40 | Spike | Dôme | 1 unités<br>04/11/26 22:00 | Spike | 3 000 unités | 3 000 cm² | #78<br>05/11/26 08:00 | 500 cm²",
+      )};`);
+    const r = await page2
+      .lire<Promise<string>>(`PartageChasses.lireSujet(1).then((r) => JSON.stringify(r))`)
+      .then(JSON.parse);
+    expect(r.chasses).toEqual([{ date: "2026-11-05 08:00", terrain: 500 }]);
+    expect(
+      r.floods.map((f: { lieu?: string; id: number | null; terrain: number }) => [
+        f.lieu || "TdC",
+        f.id,
+        f.terrain,
+      ]),
+    ).toEqual([
+      ["TdC", 78, 3000],
+      ["Loge", 77, 0],
+      ["Dôme", null, 0],
+    ]);
+    const sim = page2.lire<{ evenements: { lieu?: string; prise: number; statut: string }[] }>(
+      `PartageChasses.simuler({ chasses: {}, floods: ${JSON.stringify(r.floods.map((f: object) => ({ ...f, lanceur: "Moi" })))} }, { Moi: 50000, Spike: 93059 })`,
+    );
+    expect(sim.evenements.map((e) => [e.lieu || "TdC", e.prise, e.statut])).toEqual([
+      ["Loge", 0, "lieu"],
+      ["Dôme", 0, "lieu"],
+      ["TdC", 3000, "ok"],
+    ]);
+  });
+  test("ancienne lecture (regex des floods au terrain) : ligne de zone ignorée", () => {
+    // reF des versions sans zones : « date | cible | [unités |] N cm² … »
+    const ancien =
+      /(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s+(\d{1,2})[:hH](\d{2})\s*\|\s*([^|\n]+?)\s*\|\s*(?:(\d[\d   .]*)\s*unit[ée]s?\s*\|\s*)?(\d[\d   .]*)\s*cm/;
+    expect(ancien.test("04/11/26 21:30 | Spike | Loge | 20 000 unités | TdC 93 059 | #77")).toBe(
+      false,
+    );
+  });
+  test("partage d'une capture en loge : zone, unités, aucun TdC", () => {
+    const entrees = page2.lire(`(() => {
+      let notees = null;
+      Utils.minuteRC = (m) => m;
+      PartageChasses._avecBouton = (b, type, e) => (notees = e);
+      PartageChasses._partagerFloods([
+        { id: 77, cible: "Spike", lieu: "Loge Impériale", arrivee: moment("2026-11-04 21:30", "YYYY-MM-DD HH:mm").valueOf(), unite: { "Jeune Soldate Naine": 20000 }, terrainConnu: 93059 },
+        { id: 78, cible: "Spike", lieu: "Fourmilière", arrivee: moment("2026-11-04 21:31", "YYYY-MM-DD HH:mm").valueOf(), unite: {} },
+      ], null);
+      return notees;
+    })()`);
+    expect(entrees).toEqual([
+      {
+        date: "2026-11-04 21:30",
+        cible: "Spike",
+        unites: 20000,
+        terrain: 0,
+        tdcCible: 93059,
+        id: 77,
+        lieu: "Loge",
+      },
+    ]);
+  });
+  test("capture en loge : le TdC estimé de la cible ne baisse pas", () => {
+    expect(
+      page2.lire(`[
+        AttaqueLancee.estimerTerrain({ lieu: "Loge Impériale", unite: { a: 5000 } }, 10000),
+        AttaqueLancee.estimerTerrain({ lieu: "Fourmilière", unite: { a: 5000 } }, 10000),
+        AttaqueLancee.estimerTerrain({ lieu: "Terrain de Chasse", unite: { a: 5000 } }, 10000),
+      ]`),
+    ).toEqual([10000, 10000, 8000]);
+  });
+});

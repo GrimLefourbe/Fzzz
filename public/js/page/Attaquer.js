@@ -290,14 +290,14 @@ class PageAttaquer {
    * @method ajouterBoutons
    */
   ajouterBoutons() {
-    const titrePartager = `Lance l'attaque comme le bouton du jeu, puis la publie dans le forum de la ${Utils.alliance || "l'alliance"} (partage des floods). Terrain de chasse seulement.`;
+    const titrePartager = `Lance l'attaque comme le bouton du jeu, vers le lieu de la liste (couleur : vert terrain, orange dôme, rouge loge), puis la publie avec ce lieu dans le forum de la ${Utils.alliance || "l'alliance"}.`;
     const titreSonder = `Envoie tout de suite la sonde réglée dans Préférences → Attaque (par défaut 1 Jeune Soldate Naine), vers le lieu de sonde des préférences ou, à défaut, celui de la liste. Couleur : vert terrain, orange dôme, rouge loge.`;
     const titreSynchroSonde = `Prépare la sonde dans le formulaire et affiche le compte à rebours jusqu'à la minute pleine. À zéro, c'est à toi de cliquer sur Sonder.`;
     const titreSync = `Affiche le compte à rebours, au dixième de seconde et en heure du serveur + latence, jusqu'au moment où l'attaque arrivera sur une minute pleine (utile pour synchroniser plusieurs attaques avec des alliés). À zéro, c'est à toi de cliquer sur le bouton du jeu.`;
     $("input[name='ChoixArmee']")
       .first()
       .after(
-        `<div id="o_btnLancer"><button type="button" id="o_lancerPartager" class="o_button f_info" title="${Utils.echapper(titrePartager)}" disabled>Lancer + partager</button><button type="button" id="o_sonder" class="o_button o_boutonLieu" title="${Utils.echapper(titreSonder)}" disabled>Sonder</button><button type="button" id="o_synchro" class="o_button f_info" title="${Utils.echapper(titreSync)}" disabled>Synchroniser</button><button type="button" id="o_synchroSonde" class="o_button o_boutonLieu" title="${Utils.echapper(titreSynchroSonde)}" disabled>Synchro sonde</button></div>${Utils.affichage("trajet") ? `<p class="centre reduce">Temps de trajet : <span id="o_tempsTrajet" class="gras">…</span></p>` : ""}<p class="centre reduce ligne_paire">Votre armée rentrera le <span id="o_retourArmee" class="gras">…</span> (RC : <span id="o_retourArmeeRC" class="gras">…</span>).</p>`,
+        `<div id="o_btnLancer"><button type="button" id="o_lancerPartager" class="o_button" title="${Utils.echapper(titrePartager)}" disabled>Lancer + partager</button><button type="button" id="o_sonder" class="o_button" title="${Utils.echapper(titreSonder)}" disabled>Sonder</button><button type="button" id="o_synchro" class="o_button f_info" title="${Utils.echapper(titreSync)}" disabled>Synchroniser</button><button type="button" id="o_synchroSonde" class="o_button f_info" title="${Utils.echapper(titreSynchroSonde)}" disabled>Synchro sonde</button></div>${Utils.affichage("trajet") ? `<p class="centre reduce">Temps de trajet : <span id="o_tempsTrajet" class="gras">…</span></p>` : ""}<p class="centre reduce ligne_paire">Votre armée rentrera le <span id="o_retourArmee" class="gras">…</span> (RC : <span id="o_retourArmeeRC" class="gras">…</span>).</p>`,
       );
     // ligne du compte à rebours réservée dès l'affichage : la lancer ne
     // décale pas le reste de la page
@@ -305,28 +305,13 @@ class PageAttaquer {
       $("#formulaireChoixArmee fieldset:eq(1)").append(
         "<p id='o_syncA' class='centre o_syncReserve'>&nbsp;</p>",
       );
-    // partage des floods : terrain de chasse seulement (lieu 1) ; masqué sans
-    // libérer sa place, pour que rien ne bouge quand le lieu change
-    let terrainChoisi = () => $("#lieu").val() == "1",
-      majPartager = () => $("#o_lancerPartager").css("visibility", terrainChoisi() ? "" : "hidden");
-    $("#lieu").on("change", () => {
-      majPartager();
-      this.majCouleurs();
-    });
-    majPartager();
+    $("#lieu").on("change", () => this.majCouleurs());
     this.majCouleurs();
     $("#o_lancerPartager").on("click", (e) => {
       if (e.currentTarget.disabled) return;
-      // relu au clic : le navigateur peut remettre une ancienne valeur dans la
-      // liste sans événement « change »
-      if (!terrainChoisi()) {
-        majPartager();
-        $.toast({
-          ...TOAST_ERROR,
-          text: "« Lancer + partager » n'envoie que sur le Terrain de chasse : rien n'a été envoyé.",
-        });
-        return;
-      }
+      // couleur recalée au clic : le navigateur peut remettre une ancienne
+      // valeur dans la liste sans événement « change »
+      this.majCouleurs();
       // un seul envoi par clic, même en double-cliquant
       $(e.currentTarget).prop("disabled", true);
       // le submit part pendant click() : la capture lit l'option à ce moment
@@ -369,16 +354,20 @@ class PageAttaquer {
     );
   }
   /**
-   * Couleur du lieu visé : vert terrain, orange dôme, rouge loge. Bouton du
-   * jeu d'après la liste, boutons de sonde d'après le lieu de sonde.
+   * Couleur du lieu visé par les boutons qui envoient : vert terrain, orange
+   * dôme, rouge loge. Bouton du jeu et « Lancer + partager » d'après la liste,
+   * « Sonder » d'après le lieu de sonde.
    *
    * @private
    * @method majCouleurs
    */
   majCouleurs() {
     let colorer = ($b, lieu) => $b.removeClass("o_lieu1 o_lieu2 o_lieu3").addClass("o_lieu" + lieu);
-    colorer($("input[name='ChoixArmee']").first(), parseInt($("#lieu").val()) || LIEU_JEU_TERRAIN);
-    colorer($(".o_boutonLieu"), this.lieuSonde());
+    colorer(
+      $("input[name='ChoixArmee']:first, #o_lancerPartager"),
+      parseInt($("#lieu").val()) || LIEU_JEU_TERRAIN,
+    );
+    colorer($("#o_sonder"), this.lieuSonde());
   }
   /**
    * Unités présentes chez moi, d'après les colonnes Terrain, Fourmilière et

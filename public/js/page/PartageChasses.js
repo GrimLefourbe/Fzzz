@@ -207,6 +207,11 @@ class PartageChasses {
           `${D}\\s*\\|\\s*([^|\\n]+?)\\s*\\|\\s*(?:${U}\\s*\\|\\s*)?${N}²?(?:\\s*\\|\\s*TdC\\s*(\\d[\\d \\u00a0\\u202f.]*))?(?:\\s*\\|\\s*#(\\d+))?`,
           "g",
         ),
+        // attaque en dôme ou en loge : « date | cible | Dôme | unités [| TdC] [| #id] »
+        reZ = new RegExp(
+          `${D}\\s*\\|\\s*([^|\\n]+?)\\s*\\|\\s*(Dôme|Loge)\\s*\\|\\s*${U}(?:\\s*\\|\\s*TdC\\s*(\\d[\\d \\u00a0\\u202f.]*))?(?:\\s*\\|\\s*#(\\d+))?`,
+          "g",
+        ),
         // anciens relevés (Fzzz 1.13.0/1.13.1) : codes FZC / FZF, lus seulement
         // si le sujet n'a aucune ligne au format actuel
         reC0 = /FZC\|(\d{4}-\d\d-\d\d \d\d:\d\d)\|(\d+)\|/g,
@@ -226,9 +231,19 @@ class PartageChasses {
           tdcCible: m[9] ? nombre(m[9]) : null,
           id: m[10] ? parseInt(m[10]) : null,
         });
+      while ((m = reZ.exec(texte)))
+        floods.push({
+          date: date(m),
+          cible: PartageChasses.nettoyer(m[6]),
+          unites: nombre(m[8]),
+          terrain: 0,
+          tdcCible: m[9] ? nombre(m[9]) : null,
+          id: m[10] ? parseInt(m[10]) : null,
+          lieu: m[7],
+        });
       // une ligne de flood contient aussi « date | … » : les chasses sont lues
       // sur le texte privé des lignes de flood
-      let texteC = texte.replace(reF, "");
+      let texteC = texte.replace(reF, "").replace(reZ, "");
       while ((m = reC.exec(texteC))) chasses.push({ date: date(m), terrain: nombre(m[6]) });
       if (!chasses.length)
         while ((m = reC0.exec(texte))) chasses.push({ date: m[1], terrain: parseInt(m[2]) });
@@ -411,10 +426,14 @@ class PartageChasses {
    * @private
    */
   static _ligne(type, e) {
-    let date = moment(e.date, "YYYY-MM-DD HH:mm").format("DD/MM/YY HH:mm");
-    return type == "Chasses"
-      ? `${date} | ${numeral(e.terrain).format()} cm²`
-      : `${date} | ${e.cible} | ${e.unites ? numeral(e.unites).format() + " unités | " : ""}${numeral(e.terrain).format()} cm²${e.tdcCible ? ` | TdC ${numeral(e.tdcCible).format()}` : ""}${e.id ? ` | #${e.id}` : ""}`;
+    let date = moment(e.date, "YYYY-MM-DD HH:mm").format("DD/MM/YY HH:mm"),
+      suite = `${e.tdcCible ? ` | TdC ${numeral(e.tdcCible).format()}` : ""}${e.id ? ` | #${e.id}` : ""}`;
+    if (type == "Chasses") return `${date} | ${numeral(e.terrain).format()} cm²`;
+    // dôme ou loge : sans « cm² », la ligne est ignorée par les versions qui
+    // ne connaissent pas les zones (elles y verraient un flood prenant du TdC)
+    if (e.lieu)
+      return `${date} | ${e.cible} | ${e.lieu} | ${numeral(e.unites || 0).format()} unités${suite}`;
+    return `${date} | ${e.cible} | ${e.unites ? numeral(e.unites).format() + " unités | " : ""}${numeral(e.terrain).format()} cm²${suite}`;
   }
   /**
    * Bouton : désactivé pendant l'envoi, puis bilan.
@@ -679,13 +698,24 @@ class PartageChasses {
       $bouton,
       "Floods",
       captures
-        .filter((c) => c && c.arrivee && /terrain/i.test(c.lieu || ""))
+        .filter((c) => c && c.arrivee)
         .map((c) => {
           let unites = Object.values(c.unite || {}).reduce((t, n) => t + (n || 0), 0),
+            zone = AttaqueLancee.zoneLieu(c.lieu),
             estimee =
               c.terrainDepart != null && c.terrainCible != null
                 ? c.terrainDepart - c.terrainCible
                 : null;
+          if (zone == "Dôme" || zone == "Loge")
+            return {
+              date: Utils.minuteRC(moment(c.arrivee)).format("YYYY-MM-DD HH:mm"),
+              cible: c.cible,
+              unites: unites || null,
+              terrain: 0,
+              tdcCible: c.terrainConnu || c.terrainDepart || null,
+              id: c.id,
+              lieu: zone,
+            };
           return {
             // minute du RC (celle où le terrain change), comme le tableau des attaques
             date: Utils.minuteRC(moment(c.arrivee)).format("YYYY-MM-DD HH:mm"),
@@ -699,7 +729,7 @@ class PartageChasses {
             id: c.id,
           };
         })
-        .filter((e) => e.terrain > 0),
+        .filter((e) => e.terrain > 0 || (e.lieu && e.unites)),
     );
   }
   /**
@@ -799,7 +829,11 @@ class PartageChasses {
         tl = tdc[l],
         envoi = e.unites != null ? e.unites : e.terrain;
       e.tdcCibleAvant = tc;
-      if (tc == null) {
+      if (e.lieu) {
+        // dôme ou loge : un combat, aucun TdC ne change de main
+        e.prise = 0;
+        e.statut = "lieu";
+      } else if (tc == null) {
         // TdC de la cible inconnu : prise estimée au lancement
         e.prise = e.terrain;
         e.statut = "inconnu";
@@ -846,6 +880,7 @@ class PartageChasses {
         lanceur: e.lanceur,
         cible: e.cible,
         statut: e.statut,
+        lieu: e.lieu || null,
         flood: true,
       });
     });
@@ -871,6 +906,8 @@ class PartageChasses {
    * @method libellePrise
    */
   static libellePrise(v, unite = " cm²") {
+    if (v.statut == "lieu")
+      return `<span class='o_priseLieu' title='Attaque en ${v.lieu == "Loge" ? "loge" : "dôme"} : aucun TdC pris'>${v.lieu}</span>`;
     let html =
       v.delta == 0
         ? `<span>0${unite}</span>`

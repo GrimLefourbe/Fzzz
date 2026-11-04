@@ -1285,7 +1285,7 @@ hr.o_scSepar {
     grid-column: 2;
   }
 }
-/* lieu visé : vert terrain, orange dôme, rouge loge (bouton du jeu et sondes) */
+/* lieu visé : vert terrain, orange dôme, rouge loge (boutons qui envoient) */
 .o_lieu1,
 .o_lieu2,
 .o_lieu3 {
@@ -2733,4 +2733,9 @@ html:not(.o_desactivee) #tabMembresAlliance.o_allMesure .o_allCol2 {
   color: var(--fzzz-secondaire);
   font-style: italic;
   opacity: 0.85;
+}
+
+/* attaque partagée en dôme ou en loge : pas de TdC pris */
+.o_priseLieu {
+  font-style: italic;
 }
