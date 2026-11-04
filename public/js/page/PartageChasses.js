@@ -26,6 +26,10 @@ const CLE_PARTAGE_CHASSES_APRES = "fzzz_partageChassesApres";
 let fileFloodsForum = Promise.resolve();
 // numéros dont le retrait est déjà en cours sur cette page
 let retraitsEnCours = new Set();
+// sujets lus pour l'affichage, réutilisés une minute d'une page à l'autre ;
+// les écritures relisent toujours le forum (un autre appareil a pu écrire)
+const CLE_CACHE_FORUM = "fzzz_cacheForum";
+const DUREE_CACHE_FORUM = 60000;
 
 /**
  * Partage des chasses et des floods avec l'alliance, stocké dans son forum
@@ -87,7 +91,7 @@ class PartageChasses {
    * @static
    */
   static _xajax(fonction, args) {
-    return Promise.resolve(
+    let requete = Promise.resolve(
       $.ajax({
         type: "post",
         url: location.origin + "/alliance.php?forum_menu",
@@ -97,6 +101,47 @@ class PartageChasses {
             : { xajax: fonction, "xajaxargs[]": args, xajaxr: moment().valueOf() },
       }),
     );
+    // sujet créé ou modifié : les lectures gardées ne sont plus à jour
+    if (/^envoi/.test(fonction)) {
+      PartageChasses.oublierCache();
+      requete.then(PartageChasses.oublierCache, PartageChasses.oublierCache);
+    }
+    return requete;
+  }
+  /**
+   * Lecture du forum gardée DUREE_CACHE_FORUM : `lire` n'est appelée que si la
+   * dernière lecture de `cle` est plus ancienne. Le résultat est gardé.
+   *
+   * @static
+   * @method _enCache
+   * @param {String} cle
+   * @param {Boolean} accepte false : lecture neuve (avant une écriture)
+   * @param {() => Promise} lire
+   * @return {Promise}
+   */
+  static _enCache(cle, accepte, lire) {
+    let cache = Utils.lireStockage(CLE_CACHE_FORUM),
+      e = cache[cle];
+    if (accepte && e && Date.now() - e.t < DUREE_CACHE_FORUM) return Promise.resolve(e.v);
+    return lire().then((v) => {
+      let maintenant = Date.now(),
+        garde = Utils.lireStockage(CLE_CACHE_FORUM);
+      for (let k in garde) if (maintenant - garde[k].t >= DUREE_CACHE_FORUM) delete garde[k];
+      garde[cle] = { t: maintenant, v };
+      try {
+        localStorage.setItem(CLE_CACHE_FORUM, JSON.stringify(garde));
+      } catch (err) {}
+      return v;
+    });
+  }
+  /**
+   * @static
+   * @method oublierCache
+   */
+  static oublierCache() {
+    try {
+      localStorage.removeItem(CLE_CACHE_FORUM);
+    } catch (e) {}
   }
   /**
    * Texte HTML de toutes les commandes d'une réponse xajax.
@@ -150,44 +195,63 @@ class PartageChasses {
    *
    * @static
    * @method sujets
+   * @param {Boolean} [cache] lecture de moins d'une minute acceptée (affichage)
    */
-  static sujets() {
+  static sujets(cache = false) {
     return PartageChasses.trouverSection().then((id) =>
-      PartageChasses._xajax("callGetForum", id).then((data) => {
-        let reponse = PartageChasses._html(data);
-        if (!reponse.includes("form_cat")) {
-          // identifiant périmé (section supprimée puis recréée) : on le relira
-          PartageChasses.idSection = null;
-          throw new Error("section inaccessible");
-        }
-        // clé « Type | pseudo en minuscules » → id ; sujets.liste garde la casse
-        let sujets = { liste: [] };
-        Utils.parseHtml(reponse)
-          .find("#form_cat tr")
-          .each((i, elt) => {
-            let titre = $(elt).find("td:eq(1)").text().trim(),
-              m = titre.match(/^(Chasses|Floods|Convois) \| (.+)$/),
-              idSujet =
-                $(elt).find("input[name='topic[]']").val() ||
-                (($(elt).find("a.topic_forum").attr("onclick") || "").match(/\d+/) || [])[0];
-            if (m && idSujet) {
-              // titre écrit par un membre : caractères de balisage retirés
-              let pseudo = PartageChasses.nettoyer(m[2]);
-              sujets[`${m[1]} | ${pseudo.toLowerCase()}`] = idSujet;
-              sujets.liste.push({ type: m[1], pseudo: pseudo, id: idSujet });
-            }
-          });
-        return sujets;
-      }),
+      PartageChasses._enCache("sujets", cache, () => PartageChasses._lireSujets(id)),
     );
+  }
+  /**
+   * @private
+   * @static
+   */
+  static _lireSujets(id) {
+    return PartageChasses._xajax("callGetForum", id).then((data) => {
+      let reponse = PartageChasses._html(data);
+      if (!reponse.includes("form_cat")) {
+        // identifiant périmé (section supprimée puis recréée) : on le relira
+        PartageChasses.idSection = null;
+        throw new Error("section inaccessible");
+      }
+      // clé « Type | pseudo en minuscules » → id ; sujets.liste garde la casse
+      let sujets = { liste: [] };
+      Utils.parseHtml(reponse)
+        .find("#form_cat tr")
+        .each((i, elt) => {
+          let titre = $(elt).find("td:eq(1)").text().trim(),
+            m = titre.match(/^(Chasses|Floods|Convois) \| (.+)$/),
+            idSujet =
+              $(elt).find("input[name='topic[]']").val() ||
+              (($(elt).find("a.topic_forum").attr("onclick") || "").match(/\d+/) || [])[0];
+          if (m && idSujet) {
+            // titre écrit par un membre : caractères de balisage retirés
+            let pseudo = PartageChasses.nettoyer(m[2]);
+            sujets[`${m[1]} | ${pseudo.toLowerCase()}`] = idSujet;
+            sujets.liste.push({ type: m[1], pseudo: pseudo, id: idSujet });
+          }
+        });
+      return sujets;
+    });
   }
   /**
    * Lignes de données (codes FZC / FZF) du premier message d'un sujet.
    *
    * @static
    * @method lireSujet
+   * @param {String} idSujet
+   * @param {Boolean} [cache] lecture de moins d'une minute acceptée (affichage)
    */
-  static lireSujet(idSujet) {
+  static lireSujet(idSujet, cache = false) {
+    return PartageChasses._enCache("sujet " + idSujet, cache, () =>
+      PartageChasses._lireSujet(idSujet),
+    );
+  }
+  /**
+   * @private
+   * @static
+   */
+  static _lireSujet(idSujet) {
     return PartageChasses._xajax("callGetTopic", idSujet).then((data) => {
       let $div = Utils.parseHtml(PartageChasses._html(data));
       $div.find("br").replaceWith("\n");
@@ -742,7 +806,7 @@ class PartageChasses {
    * @return {Promise<Object>} {chasses: {pseudo minuscule: [...]}, floods: [... avec lanceur]}
    */
   static charger(chassesDe = null) {
-    return PartageChasses.sujets().then((sujets) => {
+    return PartageChasses.sujets(true).then((sujets) => {
       let voulus = chassesDe ? chassesDe.map((p) => p.toLowerCase()) : null,
         liste = sujets.liste.filter(
           (t) =>
@@ -755,7 +819,7 @@ class PartageChasses {
             ? Promise.resolve()
             : Promise.all(
                 liste.slice(k, k + 4).map((t) =>
-                  PartageChasses.lireSujet(t.id)
+                  PartageChasses.lireSujet(t.id, true)
                     .then((r) => {
                       if (t.type == "Chasses") d.chasses[t.pseudo.toLowerCase()] = r.chasses;
                       else r.floods.forEach((e) => d.floods.push({ ...e, lanceur: t.pseudo }));

@@ -451,9 +451,9 @@ class AttaqueLancee {
     } catch (e) {}
     if (!pseudo || (fin != null && fin < maintenant)) return Promise.resolve([]);
     return PartageChasses.enFile(() =>
-      PartageChasses.sujets().then((sujets) => {
+      PartageChasses.sujets(true).then((sujets) => {
         let idSujet = sujets[`Chasses | ${pseudo.toLowerCase()}`];
-        return idSujet ? PartageChasses.lireSujet(idSujet).then((d) => d.chasses) : [];
+        return idSujet ? PartageChasses.lireSujet(idSujet, true).then((d) => d.chasses) : [];
       }),
     )
       .then((chasses) => {
