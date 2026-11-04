@@ -667,10 +667,17 @@ class Armee {
       donneesFlood.reste--;
       if (donneesFlood.unite <= 0) return;
     }
-    if (donneesFlood.reste > 1) {
-      // limite
-      let limite = Math.floor((donneesFlood.tdcCible * 2 - donneesFlood.tdcAtt) / 3) - 1;
-      limite = limite && donneesFlood.unite >= limite ? limite : donneesFlood.unite;
+    // attaque « limite » : prend le plus possible en laissant la cible à la
+    // moitié de mon terrain (portée) pour la dernière. Inutile si elle y est
+    // déjà (0 unité ou moins), ou si le reste ne dépasse pas 20 % : tout
+    // envoyer d'un coup prend alors autant
+    let limite = Math.floor((donneesFlood.tdcCible * 2 - donneesFlood.tdcAtt) / 3) - 1;
+    if (
+      donneesFlood.reste > 1 &&
+      limite > 0 &&
+      donneesFlood.unite > Math.floor(donneesFlood.tdcCible * 0.2)
+    ) {
+      limite = Math.min(limite, donneesFlood.unite);
       this._floods.push(limite);
       donneesFlood.tdcAtt += limite;
       donneesFlood.tdcCible -= limite;

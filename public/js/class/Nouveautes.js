@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.73.1",
+    notes: [
+      "Lanceur de flood, méthode « Optimisée » : plus d'attaque de 0 ou −1 unité quand la cible est déjà à la limite de portée, ni de petite attaque inutile quand le reste de l'armée ne dépasse pas 20 % du terrain de la cible (tout part d'un coup, même terrain pris).",
+    ],
+  },
+  {
     version: "1.73.0",
     notes: [
       "Page d'attaque : bloc « Mes attaques en cours » retiré (il apparaissait après coup au-dessus du formulaire et déplaçait le bouton « Attaquer »). Il reste sur la page Armée ; le partage des floods fonctionne comme avant.",
