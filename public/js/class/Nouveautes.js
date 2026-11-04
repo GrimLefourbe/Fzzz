@@ -9,6 +9,14 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.77.0",
+    notes: [
+      "Plus rapide : attaques, sondes, floods, chasses, annulations et replacement de l'armée passent devant les lectures automatiques de l'extension (forum, profils…), qui attendent la fin de l'action.",
+      "« Replacer l'armée » : si seules les antisondes sont hors de la loge, seule la différence est déplacée (1 ou 2 requêtes au lieu de 3), et rien pour un lieu déjà dans ses bornes.",
+      "Compte+ : à la fin d'une recherche, ses niveaux sont relus automatiquement (Vitesse d'attaque juste pour les temps de trajet), sans passer par la page Laboratoire.",
+    ],
+  },
+  {
     version: "1.76.1",
     notes: [
       "« Replacer l'armée » : si l'unité choisie pour les antisondes manque, la première unité disponible est utilisée ; s'il n'y a pas assez d'unités pour les deux maximums, 1 en TdC et le maximum possible en dôme (dans la limite de son maximum).",

@@ -25,7 +25,10 @@ function prevu(
     p._armeeTdc = new Armee({ unite: ${JSON.stringify(armee.tdc || {})} });
     p._armeeDome = new Armee({ unite: ${JSON.stringify(armee.dome || {})} });
     p._armeeLoge = new Armee({ unite: ${JSON.stringify(armee.loge || {})} });
-    p.replacer = (i, t, d) => (appel = [i, t, d]);
+    p.replacer = (i, t, d, etapes) => {
+      appel = [i, t, d];
+      window.etapes = etapes.filter((e) => e.toutEnLoge || e.nb > 0);
+    };
     let f = p.placementPrevu();
     if (f) f();
     return [p.indiceUniteReplacement(), appel];
@@ -81,5 +84,45 @@ describe("replacement de l'armée", () => {
     expect(
       prevu({ loge: { "Jeune Soldate Naine": 1 } }, { terrain: 100, dome: 20, unite: 0 }),
     ).toEqual([0, [0, 1, 0]]);
+  });
+  test("seules les antisondes dehors : seulement la différence, retours en loge d'abord", () => {
+    const parametres = { terrain: 100, dome: 50, unite: 0 },
+      etapes = () => page.lire(`window.etapes`);
+    // terrain déjà dans ses bornes : seul le dôme est complété
+    prevu(
+      {
+        tdc: { "Jeune Soldate Naine": 95 },
+        dome: { "Jeune Soldate Naine": 10 },
+        loge: { "Jeune Soldate Naine": 900 },
+      },
+      parametres,
+    );
+    let e = etapes();
+    expect(e.length).toBe(1);
+    expect([e[0].de, e[0].vers]).toEqual([3, 2]);
+    expect(e[0].nb).toBeGreaterThanOrEqual(35);
+    expect(e[0].nb).toBeLessThanOrEqual(40);
+    // trop en terrain, rien en dôme : terrain → loge, puis loge → dôme
+    prevu({ tdc: { "Jeune Soldate Naine": 150 }, loge: { "Jeune Soldate Naine": 10 } }, parametres);
+    e = etapes();
+    expect(e.map((x: { de: number; vers: number }) => [x.de, x.vers])).toEqual([
+      [1, 3],
+      [3, 2],
+    ]);
+  });
+  test("d'autres unités hors de la loge : tout en loge d'abord", () => {
+    prevu(
+      {
+        tdc: { "Soldate Naine": 5, "Jeune Soldate Naine": 95 },
+        loge: { "Jeune Soldate Naine": 900 },
+      },
+      { terrain: 100, dome: 50, unite: 0 },
+    );
+    const e = page.lire(`window.etapes`);
+    expect(e[0]).toEqual({ toutEnLoge: true });
+    expect(e.slice(1).map((x: { de: number; vers: number }) => [x.de, x.vers])).toEqual([
+      [3, 1],
+      [3, 2],
+    ]);
   });
 });

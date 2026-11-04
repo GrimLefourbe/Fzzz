@@ -119,7 +119,7 @@ describe("page d'attaque : sondes", () => {
     const posts = page.lire<{ url: string; donnees: Record<string, unknown> }[]>(`posts`);
     expect(posts.length).toBe(1);
     const [post] = posts;
-    expect(post?.url).toBe("ennemie.php?Attaquer=866");
+    expect(post?.url).toBe("https://s5.fourmizzz.fr/ennemie.php?Attaquer=866");
     expect(post?.donnees).toEqual({
       t: "jeton",
       ChoixArmee: "1",

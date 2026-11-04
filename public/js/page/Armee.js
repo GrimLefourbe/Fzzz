@@ -220,17 +220,45 @@ class PageArmee {
     if (i == -1) return null;
     let dispo = this._armeeLoge.unite[i] + this._armeeDome.unite[i] + this._armeeTdc.unite[i],
       terrain = monProfil.parametre["uniteAntisondeTerrain"].valeur,
-      dome = monProfil.parametre["uniteAntisondeDome"].valeur;
-    if (dispo >= terrain + dome) {
-      if (!this.estPlacePourAntiSonde(i, terrain, dome))
-        return () => this.replacer(i, PageArmee.tirer(terrain), PageArmee.tirer(dome));
-    } else {
-      // pas assez d'unités pour les deux antisondes : 1 en terrain, le reste
-      // en dôme dans la limite de son maximum
-      let auDome = Math.max(0, Math.min(dome, dispo - 1));
-      if (!this.estPlacePourAntiSonde(i, 1, auDome)) return () => this.replacer(i, 1, auDome);
+      dome = monProfil.parametre["uniteAntisondeDome"].valeur,
+      assez = dispo >= terrain + dome;
+    // pas assez d'unités pour les deux antisondes : 1 en terrain, le reste
+    // en dôme dans la limite de son maximum
+    if (!assez) {
+      dome = Math.max(0, Math.min(dome, dispo - 1));
+      terrain = 1;
     }
-    return null;
+    if (this.estPlacePourAntiSonde(i, terrain, dome)) return null;
+    let cible = (max) => (assez ? PageArmee.tirer(max) : max),
+      autres =
+        this._armeeTdc.unite.some((n, k) => n > 0 && k != i) ||
+        this._armeeDome.unite.some((n, k) => n > 0 && k != i);
+    // d'autres unités hors de la loge : tout en loge, puis les antisondes
+    if (autres) {
+      let t = cible(terrain),
+        d = cible(dome);
+      return () =>
+        this.replacer(i, t, d, [
+          { toutEnLoge: true },
+          { de: LIEU_ARMEE.LOGE, vers: LIEU_ARMEE.TERRAIN, nb: t },
+          { de: LIEU_ARMEE.LOGE, vers: LIEU_ARMEE.DOME, nb: d },
+        ]);
+    }
+    // seules les antisondes sont dehors : on ne déplace que la différence, et
+    // rien pour un lieu déjà dans ses bornes (90 % à 100 % du maximum)
+    let dans = (n, max) => n <= max && n >= max * 0.9,
+      tdc = this._armeeTdc.unite[i],
+      dom = this._armeeDome.unite[i],
+      t = dans(tdc, terrain) ? tdc : cible(terrain),
+      d = dans(dom, dome) ? dom : cible(dome),
+      ecart = (lieu, avant, apres) =>
+        apres < avant
+          ? { de: lieu, vers: LIEU_ARMEE.LOGE, nb: avant - apres }
+          : { de: LIEU_ARMEE.LOGE, vers: lieu, nb: apres - avant },
+      etapes = [ecart(LIEU_ARMEE.TERRAIN, tdc, t), ecart(LIEU_ARMEE.DOME, dom, d)]
+        // les retours en loge d'abord : la loge a alors de quoi fournir l'autre lieu
+        .sort((x, y) => (y.vers == LIEU_ARMEE.LOGE) - (x.vers == LIEU_ARMEE.LOGE));
+    return () => this.replacer(i, t, d, etapes);
   }
   /**
    * Nombre tiré entre 90 % du maximum et le maximum (antisonde moins prévisible).
@@ -340,33 +368,36 @@ class PageArmee {
     return option.length ? option.val() : "unite" + CHOIX_UNITE_JEU[i];
   }
   /**
-   * Tout en loge, puis `terrain` puis `dome` unités d'indice `i` de la loge
-   * vers le terrain et vers le dôme ; tableau de la garnison remplacé par
-   * celui de la dernière réponse.
+   * Déplacements du formulaire « Déplacer » du jeu, l'un après l'autre, pour
+   * finir avec `terrain` et `dome` unités d'indice `i` en terrain et en dôme ;
+   * tableau de la garnison remplacé par celui de la dernière réponse.
    *
    * @method replacer
+   * @param {Integer} i indice dans Armee.unite
+   * @param {Integer} terrain unités attendues en terrain à la fin
+   * @param {Integer} dome unités attendues en dôme à la fin
+   * @param {Array<Object>} deplacements {toutEnLoge: true} ou {de, vers, nb}
    * @return {Promise}
    */
-  replacer(i, terrain, dome) {
+  replacer(i, terrain, dome, deplacements) {
     let jeton = () => ({ [$("#t").attr("name")]: $("#t").val() }),
       reponse = null,
-      etapes = [() => $.get("/Armee.php", { deplacement: 3, ...jeton() })];
-    [
-      [LIEU_ARMEE.TERRAIN, terrain],
-      [LIEU_ARMEE.DOME, dome],
-    ].forEach(([lieu, nb]) => {
-      if (nb > 0)
-        etapes.push(() =>
-          $.post("/Armee.php", {
-            ...jeton(),
-            nbTroupes: nb,
-            ChoixUnite: PageArmee.valeurUnite(i),
-            LieuOrigine: LIEU_ARMEE.LOGE,
-            LieuDestination: lieu,
-            Transferer: "Envoyer",
-          }),
+      etapes = deplacements
+        .filter((e) => e.toutEnLoge || e.nb > 0)
+        .map((e) =>
+          e.toutEnLoge
+            ? () => $.get("/Armee.php", { deplacement: LIEU_ARMEE.LOGE, ...jeton() })
+            : () =>
+                $.post("/Armee.php", {
+                  ...jeton(),
+                  nbTroupes: e.nb,
+                  ChoixUnite: PageArmee.valeurUnite(i),
+                  LieuOrigine: e.de,
+                  LieuDestination: e.vers,
+                  Transferer: "Envoyer",
+                }),
         );
-    });
+    if (!etapes.length) return Promise.resolve();
     return etapes
       .reduce(
         (suite, etape) =>

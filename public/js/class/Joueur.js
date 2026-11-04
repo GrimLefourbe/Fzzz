@@ -3,6 +3,9 @@
  * Hraesvelg
  **********************************************************************/
 
+// Compte+ : recherche en cours lue dans l'encart du jeu, {nom, fin (ms)}
+const CLE_RECHERCHE_EN_COURS = "fzzz_rechercheEnCours";
+
 /**
  * Classe pour creer et gérer un joueur
  *
@@ -662,14 +665,49 @@ class Joueur {
     let data = Utils.lireStockage("outiiil_joueur");
     // Si des données sont deja presente et à jour on les charges
     if (data.hasOwnProperty("niveauRecherche")) this._niveauRecherche = data.niveauRecherche;
-    // si on pas les infos en localstorage
+    // niveaux inconnus, ou recherche terminée depuis la dernière lecture
     if (
+      Joueur.rechercheTerminee() ||
       this._niveauRecherche.every((elt) => {
         return elt == -1;
       })
     )
       return $.ajax({ url: location.origin + "/laboratoire.php" });
     return null;
+  }
+  /**
+   * Compte+ : suit la recherche en cours affichée dans l'encart du jeu (nom et
+   * secondes restantes), sans requête. Vrai au premier chargement de page
+   * après la fin d'une recherche : ses niveaux (Vitesse d'attaque pour les
+   * temps de trajet…) sont alors à relire. Une recherche annulée ne compte pas.
+   * Sans Compte+, l'encart refait par l'extension suit la recherche
+   * (BoiteComptePlus.verifierDonnees).
+   *
+   * @static
+   * @method rechercheTerminee
+   * @return {Boolean}
+   */
+  static rechercheTerminee() {
+    let $ligne = $("#ligne_recherche");
+    if (!$ligne.length) return false;
+    let avant = Utils.lireStockage(CLE_RECHERCHE_EN_COURS),
+      maintenant = Date.now(),
+      secondes = parseInt(
+        ($ligne
+          .find("script")
+          .text()
+          .match(/resteTemps\((\d+)/) || [])[1],
+      ),
+      nom = $ligne.find("td").eq(1).text().trim();
+    try {
+      if (secondes > 0 && nom)
+        localStorage.setItem(
+          CLE_RECHERCHE_EN_COURS,
+          JSON.stringify({ nom, fin: maintenant + secondes * 1000 }),
+        );
+      else localStorage.removeItem(CLE_RECHERCHE_EN_COURS);
+    } catch (e) {}
+    return avant.fin > 0 && avant.fin <= maintenant;
   }
   /**
    *

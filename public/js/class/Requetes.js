@@ -19,6 +19,22 @@
  * $.ajax : les .then / .done / .fail / .always et Promise.all existants marchent
  * sans changement.
  */
+/**
+ * Requêtes qui exécutent une action du joueur (attaque, sonde, chasse,
+ * déplacement d'armée, annulation) : elles passent devant les lectures
+ * automatiques (forum, profils, Reine…). Après l'une d'elles, les lectures
+ * attendent PAUSE_APRES_ACTION : les étapes suivantes d'un enchaînement
+ * (flood, chasses espacées, replacement) passent sans attendre derrière elles.
+ */
+const REQUETES_ACTION = [
+  { url: /\/ennemie\.php\?(Attaquer|annuler)=/i },
+  { url: /\/AcquerirTerrain\.php/i },
+  { url: /\/Armee\.php\?(deplacement|Transferer)/i },
+  { url: /\/Armee\.php/i, methode: "POST" },
+  { url: /\/Ressources\.php\?annuler=/i },
+];
+const PAUSE_APRES_ACTION = 2500;
+
 (function () {
   const ajaxOriginal = $.ajax,
     VERROU = "Une autre action est en cours sur votre compte",
@@ -26,10 +42,47 @@
     DELAI_ESSAI = 400, // ms, multiplié par le numéro de l'essai
     // sans délai max, une requête qui ne répond jamais bloquerait toute la file
     DELAI_MAX = 30000;
-  let file = Promise.resolve();
+  let enCours = false,
+    finAction = 0,
+    attente = null,
+    actions = [],
+    lectures = [];
 
   let versLeJeu = (url) =>
     typeof url == "string" && (url.startsWith(location.origin) || url.startsWith("/"));
+
+  let estAction = (requete) => {
+    let d = requete.data,
+      adresse = requete.url + (d ? "?" + (typeof d == "string" ? d : $.param(d)) : "");
+    return REQUETES_ACTION.some(
+      (r) =>
+        r.url.test(adresse) &&
+        (!r.methode || String(requete.method || requete.type || "GET").toUpperCase() == r.methode),
+    );
+  };
+
+  // une requête à la fois : les actions d'abord, les lectures ensuite
+  let suivante = () => {
+    if (enCours) return;
+    let envoi = actions.shift(),
+      action = !!envoi;
+    if (!envoi && lectures.length) {
+      let reste = finAction + PAUSE_APRES_ACTION - Date.now();
+      if (reste > 0) {
+        clearTimeout(attente);
+        attente = setTimeout(suivante, reste);
+        return;
+      }
+      envoi = lectures.shift();
+    }
+    if (!envoi) return;
+    enCours = true;
+    envoi().then(() => {
+      enCours = false;
+      if (action) finAction = Date.now();
+      suivante();
+    });
+  };
 
   $.ajax = function (url, options) {
     if (typeof url == "object") {
@@ -71,7 +124,8 @@
           },
         );
       });
-    file = file.then(() => envoyer(1));
+    (estAction(requete) ? actions : lectures).push(() => envoyer(1));
+    suivante();
     return differe.promise();
   };
 })();

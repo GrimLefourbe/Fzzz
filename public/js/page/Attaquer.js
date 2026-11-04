@@ -461,7 +461,9 @@ class PageAttaquer {
     $("#tabChoixArmee input[id^='unite']").each((i, champ) => {
       donnees[champ.name] = champ.id == sonde.id ? sonde.nb : 0;
     });
-    $.post($("#formulaireChoixArmee").attr("action"), donnees)
+    // adresse absolue : une adresse relative ne passerait pas par la file des
+    // requêtes (Requetes.js), et le jeu refuse deux requêtes simultanées
+    $.post(`${location.origin}/${$("#formulaireChoixArmee").attr("action")}`, donnees)
       .done((data) => {
         let reponse = Utils.parseHtml(data).find("center:last").text().trim();
         if (reponse.indexOf("Vos troupes sont en marche") == -1) {
