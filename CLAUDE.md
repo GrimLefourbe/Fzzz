@@ -225,9 +225,16 @@ Format: `<type>(<optional scope>): <description>`
 - `chore: init`
 - `build(release): bump version to 0.2.2`
 
-## Pull request body
+## Contributing (branches and pull requests)
 
-Solo project — pas de section « Test plan » dans le body. Les vérifs se font de vive voix entre Claude et le mainteneur avant l'ouverture de la PR. Garder uniquement la section `## Summary` (2-3 bullets concis).
+Two people now change the code: the maintainer (with Claude) and contributors such as Grim (GitHub `GrimLefourbe`).
+
+- Start every session with `git pull origin main`; another person may have pushed since.
+- Contributors work on a branch (`feat/…`, `fix/…`) and open a pull request to `main`; CI (`format:check`, `compile`, `check:js`, `test`) must pass. One topic per pull request.
+- A contributor's pull request does **not** touch the version (`package.json`), `NOUVEAUTES` (`public/js/class/Nouveautes.js`) or `fzzz.user.js`: the maintainer does these after merging, so two branches never conflict on them. It may add a note in the description to reuse in the release notes.
+- Every change still follows the s5 rules and « Rétablir l'affichage d'origine » above, with a test for any calculation it changes.
+- Publishing (maintainer, after merge): bump version + new `NOUVEAUTES` entry, run the checks, commit, push, `bun run userscript`, commit and push `fzzz.user.js`.
+- Template: `.github/pull_request_template.md`. Body: only `## Summary` (2-3 concise bullets), no « Test plan » section; checks are discussed with the maintainer.
 
 ## License
 
