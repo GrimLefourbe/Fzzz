@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.73.0",
+    notes: [
+      "Page d'attaque : bloc « Mes attaques en cours » retiré (il apparaissait après coup au-dessus du formulaire et déplaçait le bouton « Attaquer »). Il reste sur la page Armée ; le partage des floods fonctionne comme avant.",
+    ],
+  },
+  {
     version: "1.72.0",
     notes: [
       "Page d'attaque : boutons « Sonder » et « Sonder direct » retirés (ils passaient le lieu en Loge Impériale). Le bouton du jeu « Attaquer » ne bouge plus : « Lancer + partager » et « Synchroniser » s'affichent dessous dès l'ouverture de la page.",

@@ -233,7 +233,9 @@ class PageAttaquer {
       });
     }
     if (!Utils.comptePlus) this.plus();
-    AttaqueLancee.afficherTableaux();
+    // pas de bloc « Mes attaques en cours » : il s'afficherait après coup
+    // au-dessus du formulaire et déplacerait le bouton du jeu sous le doigt
+    AttaqueLancee.afficherTableaux(false);
     // rechargement après un clic (Lancer, Annuler…) : même position à l'écran
     Utils.garderPosition("fzzz_positionAttaquer");
     return this;

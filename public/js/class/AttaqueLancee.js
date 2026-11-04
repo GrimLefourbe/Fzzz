@@ -515,8 +515,10 @@ class AttaqueLancee {
    * les attaques, capturées ou non), avec une copie de chaque lien Annuler.
    * Pour une attaque non capturée, lieu et troupes viennent du texte du jeu
    * quand il les donne (C+), sinon « ? ».
+   *
+   * @param {Boolean} afficher false : captures et partages suivis, sans le bloc
    */
-  static afficherTableaux() {
+  static afficherTableaux(afficher = true) {
     let echecs = sessionStorage.getItem(CLE_ANNULATION_ECHEC);
     if (echecs) {
       sessionStorage.removeItem(CLE_ANNULATION_ECHEC);
@@ -536,7 +538,7 @@ class AttaqueLancee {
         }));
     AttaqueLancee.partagerMarquees();
     // les captures restent synchronisées (partage des floods) même sans la liste
-    if (!Utils.affichage("listeAttaques")) return;
+    if (!afficher || !Utils.affichage("listeAttaques")) return;
     if (!attaques.length) {
       AttaqueLancee.chassesPartagees().then((chasses) => {
         if (!chasses.length) return;

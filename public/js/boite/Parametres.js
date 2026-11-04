@@ -35,7 +35,7 @@ const ONGLETS_PARAMETRE = [
   {
     id: "Attaque",
     titre: "Attaque",
-    affichages: ["trajet", "listeAttaques"],
+    affichages: ["trajet"],
     origine: "pages d'attaque et liste des ennemis",
   },
   {

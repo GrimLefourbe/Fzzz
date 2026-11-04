@@ -32,7 +32,7 @@ const AFFICHAGES_FZZZ = {
   trajet: "Temps de trajet",
   syntheseChasses: "Synthèse des chasses en cours",
   lanceurChasse: "Lanceur de chasses",
-  listeAttaques: "Liste des attaques en cours (pages Armée et Attaque)",
+  listeAttaques: "Liste des attaques en cours (page Armée)",
   floodsRecus: "Floods en cours sur moi",
   profilPartages: "Chasses, floods et évolution du TdC partagés",
 };
