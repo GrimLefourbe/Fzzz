@@ -599,8 +599,8 @@ class BoiteChasse extends Boite {
     let cible = moment(brut, "DD-MM-YYYY HH:mm");
     if (!cible.isValid()) return afficher("<span class='red'>Date non valide.</span>");
     // même une chasse de 1 cm² dure le temps du TdC de lancement
-    let auPlusTot = moment().add(Math.ceil((tdcLancement + 1) * facteur), "s"),
-      terrain = Math.floor(cible.diff(moment(), "s") / facteur - tdcLancement);
+    let auPlusTot = Horloge.serveur().add(Math.ceil((tdcLancement + 1) * facteur), "s"),
+      terrain = Math.floor(cible.diff(Horloge.serveur(), "s") / facteur - tdcLancement);
     if (terrain < 1)
       return afficher(
         `<span class='red'>Pas de retour possible avant le ${auPlusTot.format("DD/MM [à] HH[h]mm")}.</span>`,

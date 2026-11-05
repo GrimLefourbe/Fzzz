@@ -608,11 +608,11 @@ class PageRessource {
       };
     if (!raw) return reset();
     // datetimepicker redéclenche `change` au blur avec la même valeur — sans ce
-    // garde-fou le tdc dérive d'~1 unité à chaque firing (diff vs moment() avance)
+    // garde-fou le tdc dérive d'~1 unité à chaque firing (l'heure avance entre deux calculs)
     if ($("#o_chasseDateArrivee").data("tdcRaw") === raw) return;
     let target = moment(raw, "DD-MM-YYYY HH:mm");
     if (!target.isValid()) return reset();
-    let secondsLeft = target.diff(moment(), "seconds");
+    let secondsLeft = target.diff(Horloge.serveur(), "seconds");
     if (secondsLeft <= 0) return reset("date passée");
     let niveau = monProfil.niveauRecherche[5],
       tdc = Math.round(secondsLeft / Math.pow(0.9, niveau) - Utils.terrain);
@@ -777,7 +777,10 @@ class PageRessource {
     $("span[id^=chasse_]").each((i, elt) => {
       listeChasse.push({
         quantite: numeral($(elt).parent().text().split("conquérir")[1].split("cm²")[0]).value(),
-        exp: moment().add($(elt).parent().next().text().split("reste(")[1].split(",")[0], "s"),
+        exp: Horloge.serveur().add(
+          $(elt).parent().next().text().split("reste(")[1].split(",")[0],
+          "s",
+        ),
       });
       $(elt)
         .parent()
@@ -1044,7 +1047,7 @@ class PageRessource {
         $("#boiteComptePlus").length)
     ) {
       this._boiteComptePlus.chasse = listeChasse;
-      this._boiteComptePlus.startChasse = moment();
+      this._boiteComptePlus.startChasse = Horloge.serveur();
       this._boiteComptePlus.sauvegarder().majChasse();
     }
     return this;
