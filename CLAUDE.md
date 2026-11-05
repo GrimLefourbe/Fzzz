@@ -247,6 +247,7 @@ Two people now change the code: the maintainer (with Claude) and contributors su
 - Every change still follows the s5 rules and « Rétablir l'affichage d'origine » above, with a test for any calculation it changes.
 - **Cross-cutting change** (clock, time zone, a storage key or format, the forum line format, a helper used in many files): search every use first, change them all in the same change, add a test that catches a missed or new use, and tell the maintainer what was changed and what was deliberately left as is (maintainer rule).
 - Publishing (maintainer, after merge): bump version + new `NOUVEAUTES` entry, run the checks, commit, push, `bun run userscript`, commit and push `fzzz.user.js`.
+- **Before every publication** (final or TEST): review the whole diff since the last published commit (`git diff <last published>..HEAD`, file list then hunks) and check that every changed file and hunk belongs to the intended change; report the result, and anything else found, to the maintainer (maintainer rule).
 - Template: `.github/pull_request_template.md`. Body: only `## Summary` (2-3 concise bullets), no « Test plan » section; checks are discussed with the maintainer.
 
 ## License
