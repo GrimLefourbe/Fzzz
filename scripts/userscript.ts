@@ -1,6 +1,6 @@
 /**
  * Génère fzzz.user.js, la version « script utilisateur » de Fzzz
- * (Tampermonkey, Violentmonkey) : un en-tête qui déclare en @require, dans
+ * (Tampermonkey, Violentmonkey, Userscripts sur Safari iOS) : un en-tête qui déclare en @require, dans
  * l'ordre du manifeste, tous les scripts de l'extension servis par jsDelivr à
  * un commit précis (le cache de jsDelivr est permanent pour un commit).
  *
@@ -115,6 +115,11 @@ export function entete(
       "GM_xmlhttpRequest",
       "GM_addStyle",
       "GM_getResourceText",
+      // Userscripts (Safari iOS) n'a que ces versions asynchrones
+      "GM.getValue",
+      "GM.setValue",
+      "GM.deleteValue",
+      "GM.listValues",
     ].map((g) => ["@grant", g]),
     ["@connect", "ouafchaine.fr"],
     // adresse de base des images et feuilles de style (voir userscript/shim.js)
@@ -131,8 +136,39 @@ export function entete(
     "// ==/UserScript==",
     "",
     "// Fichier généré par scripts/userscript.ts : ne pas modifier à la main.",
-    "// Le code de Fzzz est dans les @require ci-dessus ; ici, seulement ses feuilles de style.",
-    `${css.map((_, i) => `GM_addStyle(GM_getResourceText("fzzzCss${i}"));`).join("\n")}`,
+    "// Le code de Fzzz est dans les @require ci-dessus ; ici, ses feuilles de style et",
+    "// les bibliothèques réservées à certaines pages. Userscripts (Safari iOS) ne gère",
+    "// pas @resource : elles sont alors lues directement sur jsDelivr.",
+    "function fzzzRessource(nom) {",
+    "  try {",
+    '    if (typeof GM_getResourceText == "function") return GM_getResourceText(nom) || "";',
+    "  } catch (e) {}",
+    '  return "";',
+    "}",
+    "function fzzzStyle(nom, url) {",
+    "  let texte = fzzzRessource(nom);",
+    '  if (texte && typeof GM_addStyle == "function") return GM_addStyle(texte);',
+    "  // déjà liée par userscript/shim.js",
+    '  if ([...document.querySelectorAll("link[rel=stylesheet]")].some((l) => l.href == url)) return;',
+    '  let lien = document.createElement("link");',
+    '  lien.rel = "stylesheet";',
+    "  lien.href = url;",
+    "  (document.head || document.documentElement).appendChild(lien);",
+    "}",
+    "// lecture synchrone : la bibliothèque doit exister avant que la page ne s'en serve",
+    "function fzzzScript(nom, url) {",
+    "  let texte = fzzzRessource(nom);",
+    "  if (texte) return texte;",
+    "  try {",
+    "    let x = new XMLHttpRequest();",
+    '    x.open("GET", url, false);',
+    "    x.send();",
+    '    return x.status == 200 ? x.responseText : "";',
+    "  } catch (e) {",
+    '    return "";',
+    "  }",
+    "}",
+    ...css.map((f, i) => `fzzzStyle("fzzzCss${i}", "${cdn}/public/${f}");`),
     "",
     "// Bibliothèques réservées à certaines pages (voir wxt.config.ts), exécutées seulement là.",
     ...groupes.flatMap((g) => [
@@ -142,7 +178,7 @@ export function entete(
         let exports = globales(lire(f))
           .map((n) => `if (typeof ${n} != "undefined") window.${n} = ${n};`)
           .join(" ");
-        return `  eval(GM_getResourceText("fzzzJs${dePages.findIndex((d) => d.js == f)}") + ${JSON.stringify("\n;" + exports)}); // ${f}`;
+        return `  eval(fzzzScript("fzzzJs${dePages.findIndex((d) => d.js == f)}", "${cdn}/public/${f}") + ${JSON.stringify("\n;" + exports)}); // ${f}`;
       }),
       "}",
     ]),

@@ -1,12 +1,15 @@
 /*
- * shim.js — version « script utilisateur » de Fzzz (Tampermonkey, Violentmonkey).
+ * shim.js — version « script utilisateur » de Fzzz (Tampermonkey, Violentmonkey,
+ * Userscripts sur Safari iOS).
  *
  * Premier fichier chargé par fzzz.user.js, avant les bibliothèques et les
  * scripts de l'extension. Il remplace les fonctions `chrome.*` dont ces
  * scripts ont besoin par leurs équivalents GM_* :
  *  - runtime.getURL : fichiers statiques (images, CSS) servis par jsDelivr,
  *    à la même version que les scripts (adresse lue dans la ressource fzzzBase) ;
- *  - storage.local : GM_getValue / GM_setValue (partagé entre les onglets) ;
+ *  - storage.local : GM_getValue / GM_setValue (partagé entre les onglets),
+ *    ou GM.getValue / GM.setValue asynchrones quand le gestionnaire n'a que
+ *    ceux-là (Userscripts sur Safari iOS) ;
  *  - runtime.sendMessage : site de suivi OUAF par GM_xmlhttpRequest (@connect
  *    ouafchaine.fr, accès demandé par le gestionnaire au premier envoi) ;
  *  - horloge serveur : lecture passive de l'en-tête Date des requêtes déjà
@@ -14,6 +17,24 @@
  **********************************************************************/
 
 var FZZZ_USERSCRIPT = true;
+
+// Gestionnaire sans @resource (Userscripts sur Safari iOS) : feuilles de style
+// liées dès maintenant depuis jsDelivr (adresses lues dans l'en-tête), avant que
+// les scripts ne mesurent la page ; fzzz.user.js les reprend sinon.
+(function () {
+  if (typeof GM_getResourceText == "function") return;
+  try {
+    let entete = (typeof GM_info != "undefined" && GM_info.scriptMetaStr) || "";
+    for (let m of entete.matchAll(/@resource\s+fzzzCss\d+\s+(\S+)/g)) {
+      let lien = document.createElement("link");
+      lien.rel = "stylesheet";
+      lien.href = m[1];
+      (document.head || document.documentElement).appendChild(lien);
+    }
+  } catch (e) {
+    /* en-tête illisible : fzzz.user.js liera les feuilles de style */
+  }
+})();
 
 // `var` : masque le `window.chrome` de la page dans la portée du script
 var chrome = (function () {
@@ -38,35 +59,69 @@ var chrome = (function () {
   }
   const BASE = base();
 
+  // Tampermonkey, Violentmonkey : GM_* synchrones. Userscripts (Safari iOS),
+  // Greasemonkey 4 : seulement GM.*, asynchrones. Sans l'un ni l'autre : en
+  // mémoire, le temps de la page.
+  const memoire = new Map();
+  const valeurs =
+    typeof GM_getValue == "function"
+      ? {
+          lire: (cle) => Promise.resolve(GM_getValue(cle)),
+          ecrire: (cle, v) => Promise.resolve(GM_setValue(cle, v)),
+          effacer: (cle) => Promise.resolve(GM_deleteValue(cle)),
+          cles: () => Promise.resolve(GM_listValues()),
+        }
+      : typeof GM != "undefined" && GM && typeof GM.getValue == "function"
+        ? {
+            lire: (cle) => GM.getValue(cle),
+            ecrire: (cle, v) => GM.setValue(cle, v),
+            effacer: (cle) => GM.deleteValue(cle),
+            cles: () => GM.listValues(),
+          }
+        : {
+            lire: (cle) => Promise.resolve(memoire.get(cle)),
+            ecrire: (cle, v) => Promise.resolve(memoire.set(cle, v)),
+            effacer: (cle) => Promise.resolve(memoire.delete(cle)),
+            cles: () => Promise.resolve([...memoire.keys()]),
+          };
+
   const ecouteurs = [];
   const local = {
     get(cles) {
-      let liste = cles == null ? GM_listValues() : Array.isArray(cles) ? cles : [cles];
-      let r = {};
-      for (let cle of liste) {
-        let v = GM_getValue(cle);
-        if (v !== undefined) r[cle] = v;
-      }
-      return Promise.resolve(r);
+      return (cles == null ? valeurs.cles() : Promise.resolve([].concat(cles))).then((liste) =>
+        Promise.all(liste.map((cle) => valeurs.lire(cle))).then((lus) => {
+          let r = {};
+          liste.forEach((cle, i) => {
+            if (lus[i] !== undefined) r[cle] = lus[i];
+          });
+          return r;
+        }),
+      );
     },
     set(objet) {
-      let changements = {};
-      for (let [cle, v] of Object.entries(objet)) {
-        changements[cle] = { oldValue: GM_getValue(cle), newValue: v };
-        GM_setValue(cle, v);
-      }
-      ecouteurs.forEach((f) => {
-        try {
-          f(changements, "local");
-        } catch (e) {
-          /* écouteur en erreur : les autres sont quand même prévenus */
-        }
-      });
-      return Promise.resolve();
+      let entrees = Object.entries(objet);
+      return Promise.all(entrees.map(([cle]) => valeurs.lire(cle)))
+        .then((anciennes) => {
+          let changements = {};
+          entrees.forEach(([cle, v], i) => {
+            changements[cle] = { oldValue: anciennes[i], newValue: v };
+          });
+          return Promise.all(entrees.map(([cle, v]) => valeurs.ecrire(cle, v))).then(
+            () => changements,
+          );
+        })
+        .then((changements) =>
+          ecouteurs.forEach((f) => {
+            try {
+              f(changements, "local");
+            } catch (e) {
+              /* écouteur en erreur : les autres sont quand même prévenus */
+            }
+          }),
+        );
     },
     remove(cles) {
-      (Array.isArray(cles) ? cles : [cles]).forEach((cle) => GM_deleteValue(cle));
-      return Promise.resolve();
+      return Promise.all([].concat(cles).map((cle) => valeurs.effacer(cle))).then(() => {});
     },
   };
 
@@ -101,10 +156,15 @@ var chrome = (function () {
   function echantillon(envoi, entete) {
     let date = entete ? Date.parse(entete) : NaN;
     if (Number.isNaN(date)) return;
-    let lu = GM_getValue(cleHorloge),
-      liste = Array.isArray(lu) ? lu : [];
-    liste.push({ date, envoi, reception: Date.now() });
-    local.set({ [cleHorloge]: liste.slice(-MAX_ECHANTILLONS) });
+    let reception = Date.now();
+    valeurs
+      .lire(cleHorloge)
+      .then((lu) => {
+        let liste = Array.isArray(lu) ? lu : [];
+        liste.push({ date, envoi, reception });
+        return local.set({ [cleHorloge]: liste.slice(-MAX_ECHANTILLONS) });
+      })
+      .catch(() => {});
   }
   try {
     const XHR = window.XMLHttpRequest.prototype,

@@ -142,3 +142,58 @@ describe("couche GM (userscript/shim.js)", () => {
     ).toEqual({ erreur: "requete" });
   });
 });
+
+describe("Userscripts (Safari iOS) : ni @resource ni GM_* synchrones", () => {
+  function charger() {
+    const valeurs = new Map<string, unknown>(),
+      liens: string[] = [];
+    const contexte = vm.createContext({
+      location: { hostname: "s5.fourmizzz.fr" },
+      document: {
+        head: { appendChild: (l: { href: string }) => liens.push(l.href) },
+        createElement: () => ({}),
+      },
+      GM_info: {
+        script: { version: "9.9.9" },
+        scriptMetaStr:
+          "// @resource fzzzBase https://cdn.test/gh/x@abc/public/ouaf-autorisation.html\n// @resource fzzzCss0 https://cdn.test/gh/x@abc/public/css/outiiil.css\n// @resource fzzzCss1 https://cdn.test/gh/x@abc/public/css/toasts.css",
+      },
+      GM: {
+        getValue: async (c: string) => valeurs.get(c),
+        setValue: async (c: string, v: unknown) => void valeurs.set(c, v),
+        deleteValue: async (c: string) => void valeurs.delete(c),
+        listValues: async () => [...valeurs.keys()],
+      },
+    });
+    vm.runInContext(readFileSync(join(RACINE, "userscript/shim.js"), "utf8"), contexte);
+    return { chrome: vm.runInContext("chrome", contexte), liens, valeurs };
+  }
+
+  test("feuilles de style liées depuis l'en-tête, adresses des images", () => {
+    const { chrome, liens } = charger();
+    expect(liens).toEqual([
+      "https://cdn.test/gh/x@abc/public/css/outiiil.css",
+      "https://cdn.test/gh/x@abc/public/css/toasts.css",
+    ]);
+    expect(chrome.runtime.getURL("images/copy.png")).toBe(
+      "https://cdn.test/gh/x@abc/public/images/copy.png",
+    );
+  });
+
+  test("stockage par GM.getValue / GM.setValue asynchrones", async () => {
+    const { chrome, valeurs } = charger();
+    const vus: unknown[] = [];
+    chrome.storage.onChanged.addListener((ch: any) => vus.push([ch.a.oldValue, ch.a.newValue]));
+    await chrome.storage.local.set({ a: 1 });
+    await chrome.storage.local.set({ a: 2 });
+    expect(valeurs.get("a")).toBe(2);
+    expect(await chrome.storage.local.get("a")).toEqual({ a: 2 });
+    expect(await chrome.storage.local.get(null)).toEqual({ a: 2 });
+    expect(vus).toEqual([
+      [undefined, 1],
+      [1, 2],
+    ]);
+    await chrome.storage.local.remove("a");
+    expect(await chrome.storage.local.get("a")).toEqual({});
+  });
+});
