@@ -14,8 +14,6 @@ declare const Clipboard: any;
 declare const chrome: any;
 /** Profil du joueur connecté, créé par content.js au démarrage. */
 declare var monProfil: any;
-/** Simulateur de Calystène (public/js/lib), lancé par la page Ressources. */
-declare function fzzzLancerCHS2(): void;
 /** Noms de types utilisés dans les commentaires JSDoc hérités d'Outiiil. */
 type Integer = number;
 type integer = number;
