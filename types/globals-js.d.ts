@@ -12,6 +12,8 @@ declare const Globalize: any;
 declare const ClipboardJS: any;
 declare const Clipboard: any;
 declare const chrome: any;
+// script utilisateur seulement (userscript/shim.js)
+declare var FZZZ_NOM_EXTENSION: string | null | undefined;
 /** Profil du joueur connecté, créé par content.js au démarrage. */
 declare var monProfil: any;
 /** Simulateur de Calystène (public/js/lib), lancé par la page Ressources. */

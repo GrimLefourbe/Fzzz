@@ -20,7 +20,7 @@ class Dock {
     this._desactivee = desactivee;
     // encadré « Extension OUAF », même style que l'encadré Compte+ du jeu
     this._html = `<div id="o_boiteExtension" class="boite_compte_plus">
-            <div class="titre_colonne_cliquable"><span class="titre_compte_plus">Extension OUAF</span> <span class="o_versionExtension" title="Version installée">v${VERSION}</span></div>
+            <div class="titre_colonne_cliquable"><span class="titre_compte_plus">${NOM_EXTENSION}</span> <span class="o_versionExtension" title="Version installée">v${VERSION}</span></div>
             <div class="contenu_boite_compte_plus">
             <label class="o_desactiverExtension" title="Coupe tout ce que l'extension ajoute ou calcule : chaque page s'affiche comme sans extension. La page se recharge."><input type="checkbox" id="o_desactiverExtension" ${desactivee ? "checked" : ""}/> Désactiver l'extension</label>
             ${

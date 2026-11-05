@@ -69,11 +69,39 @@ export function globales(source: string): string[] {
   ];
 }
 
+/**
+ * Script publié : la version des joueurs, ou « Extension OUAF - TEST », script
+ * séparé (autre @name et @namespace) qui suit la branche test, pour essayer
+ * une version avant de la publier.
+ */
+export interface Variante {
+  nom: string;
+  nomFr: string;
+  espace: string;
+  fichier: string;
+  branche: string;
+}
+export const PUBLIEE: Variante = {
+  nom: "Fzzz",
+  nomFr: "Extension OUAF",
+  espace: `https://github.com/${DEPOT}`,
+  fichier: "fzzz.user.js",
+  branche: "main",
+};
+export const TEST: Variante = {
+  nom: "Fzzz TEST",
+  nomFr: "Extension OUAF - TEST",
+  espace: `https://github.com/${DEPOT}/test`,
+  fichier: "fzzz-test.user.js",
+  branche: "test",
+};
+
 export function entete(
   sha: string,
   version: string,
   config: string,
   lire: (fichier: string) => string = (f) => readFileSync(`${RACINE}public/${f}`, "utf8"),
+  variante: Variante = PUBLIEE,
 ): string {
   const cdn = `https://cdn.jsdelivr.net/gh/${DEPOT}@${sha}`;
   const { css } = fichiersManifeste(config);
@@ -86,14 +114,14 @@ export function entete(
       pages: JSON.parse(cle) as string[],
       fichiers: dePages.filter((d) => JSON.stringify(d.pages) == cle).map((d) => d.js),
     }));
-  const brut = `https://raw.githubusercontent.com/${DEPOT}/main/fzzz.user.js`;
+  const brut = `https://raw.githubusercontent.com/${DEPOT}/${variante.branche}/${variante.fichier}`;
   const lignes = [
     // @name + @namespace identifient le script chez Violentmonkey/Tampermonkey :
     // les changer créerait un second script. Le nom affiché (navigateur en
     // français) est donné par @name:fr.
-    ["@name", "Fzzz"],
-    ["@name:fr", "Extension OUAF"],
-    ["@namespace", `https://github.com/${DEPOT}`],
+    ["@name", variante.nom],
+    ["@name:fr", variante.nomFr],
+    ["@namespace", variante.espace],
     ["@version", version],
     ["@description", "Outils de l'alliance OUAF pour Fourmizzz (serveur s5)."],
     ["@description:fr", "Outils de l'alliance OUAF pour Fourmizzz (serveur s5)."],
@@ -187,17 +215,25 @@ export function entete(
 }
 
 if (import.meta.main) {
-  const sha = process.argv[2] ?? execSync("git rev-parse HEAD", { cwd: RACINE }).toString().trim();
+  // bun scripts/userscript.ts [--test] [sha]
+  const test = process.argv.includes("--test"),
+    argSha = process.argv.slice(2).find((a) => a != "--test"),
+    variante = test ? TEST : PUBLIEE;
+  const sha = argSha ?? execSync("git rev-parse HEAD", { cwd: RACINE }).toString().trim();
   const sale = execSync("git status --porcelain public userscript wxt.config.ts", { cwd: RACINE })
     .toString()
     .trim();
-  if (!process.argv[2] && sale) {
+  if (!argSha && sale) {
     console.error("Modifications non commitées dans public/, userscript/ ou wxt.config.ts :");
     console.error(sale);
     process.exit(1);
   }
   const config = readFileSync(`${RACINE}wxt.config.ts`, "utf8");
-  const version = JSON.parse(readFileSync(`${RACINE}package.json`, "utf8")).version;
+  // version TEST : celle du paquet suivie de l'heure (AAAAMMJJHHmm), pour que
+  // chaque essai publié soit vu comme une mise à jour
+  const version =
+    JSON.parse(readFileSync(`${RACINE}package.json`, "utf8")).version +
+    (test ? "." + new Date().toISOString().replace(/\D/g, "").slice(0, 12) : "");
   const manquants = fichiersManifeste(config)
     .js.concat(fichiersManifeste(config).css)
     .filter((f) => !existsSync(`${RACINE}public/${f}`));
@@ -205,6 +241,6 @@ if (import.meta.main) {
     console.error("Fichiers du manifeste introuvables :", manquants);
     process.exit(1);
   }
-  writeFileSync(`${RACINE}fzzz.user.js`, entete(sha, version, config));
-  console.log(`fzzz.user.js généré (v${version}, commit ${sha.slice(0, 7)})`);
+  writeFileSync(`${RACINE}${variante.fichier}`, entete(sha, version, config, undefined, variante));
+  console.log(`${variante.fichier} généré (v${version}, commit ${sha.slice(0, 7)})`);
 }

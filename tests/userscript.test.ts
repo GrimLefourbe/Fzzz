@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import vm from "node:vm";
-import { entete, fichiersManifeste, globales, scriptsDePages } from "../scripts/userscript";
+import { entete, fichiersManifeste, globales, scriptsDePages, TEST } from "../scripts/userscript";
 
 const RACINE = join(import.meta.dir, "..");
 const config = readFileSync(join(RACINE, "wxt.config.ts"), "utf8");
@@ -195,5 +195,21 @@ describe("Userscripts (Safari iOS) : ni @resource ni GM_* synchrones", () => {
     ]);
     await chrome.storage.local.remove("a");
     expect(await chrome.storage.local.get("a")).toEqual({});
+  });
+});
+
+describe("version d'essai « Extension OUAF - TEST »", () => {
+  test("script séparé qui suit la branche test", () => {
+    const texte = entete("abc123", "1.79.3.202611051200", config, () => "", TEST);
+    expect(texte).toMatch(/@name +Fzzz TEST\n/);
+    expect(texte).toMatch(/@name:fr +Extension OUAF - TEST\n/);
+    expect(texte).toMatch(/@namespace +https:\/\/github\.com\/NumeroBis-boop\/Fzzz\/test\n/);
+    expect(texte).toMatch(
+      /@downloadURL +https:\/\/raw\.githubusercontent\.com\/NumeroBis-boop\/Fzzz\/test\/fzzz-test\.user\.js\n/,
+    );
+    // la version des joueurs garde son identité (sinon un second script s'installerait)
+    const publiee = entete("abc123", "1.79.3", config, () => "");
+    expect(publiee).toMatch(/@name +Fzzz\n/);
+    expect(publiee).toMatch(/@namespace +https:\/\/github\.com\/NumeroBis-boop\/Fzzz\n/);
   });
 });

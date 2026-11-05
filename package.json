@@ -15,6 +15,7 @@
     "test": "bun test tests/",
     "check:js": "tsc -p tsconfig.js.json",
     "userscript": "bun scripts/userscript.ts",
+    "userscript:test": "bun scripts/userscript.ts --test",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "postinstall": "wxt prepare",

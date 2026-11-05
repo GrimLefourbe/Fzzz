@@ -17,6 +17,16 @@
  **********************************************************************/
 
 var FZZZ_USERSCRIPT = true;
+// nom affiché dans le jeu : celui du script installé (« Extension OUAF - TEST »
+// pour la version d'essai), lu dans son en-tête
+var FZZZ_NOM_EXTENSION = (function () {
+  try {
+    let m = /@name:fr\s+(.+)/.exec(GM_info.scriptMetaStr || "");
+    return m ? m[1].trim() : null;
+  } catch (e) {
+    return null;
+  }
+})();
 
 // Gestionnaire sans @resource (Userscripts sur Safari iOS) : feuilles de style
 // liées dès maintenant depuis jsDelivr (adresses lues dans l'en-tête), avant que
@@ -188,6 +198,19 @@ var chrome = (function () {
     /* XMLHttpRequest non modifiable : l'horloge reste sur l'heure du PC */
   }
 
+  /** Adresse d'installation du script (version publiée ou TEST). */
+  function adresseScript() {
+    let url = "";
+    try {
+      url = GM_info.script.downloadURL || "";
+    } catch (e) {
+      /* GM_info incomplet */
+    }
+    if (url) return url;
+    let m = /@downloadURL\s+(\S+)/.exec((GM_info && GM_info.scriptMetaStr) || "");
+    return m ? m[1] : undefined;
+  }
+
   return {
     runtime: {
       getURL: (chemin) => BASE + String(chemin).replace(/^\//, ""),
@@ -196,7 +219,7 @@ var chrome = (function () {
         let type = message && message.type;
         if (type == "fzzz_ouaf") return requeteOuaf(message);
         if (type == "fzzz_majVerifier")
-          return Promise.resolve({ statut: "userscript", url: GM_info.script.downloadURL });
+          return Promise.resolve({ statut: "userscript", url: adresseScript() });
         return Promise.resolve(undefined);
       },
     },
