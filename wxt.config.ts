@@ -115,6 +115,7 @@ export default defineConfig({
           "js/lib/moment_2.19.1.js",
           "js/lib/moment-locale-fr.js",
           "js/lib/moment-duration-format.js",
+          "js/lib/moment-timezone_0.5.48.js",
         ],
       },
       // simulateur de Calystène (lanceur « Budget de pertes ») : page Ressources seulement
@@ -125,6 +126,7 @@ export default defineConfig({
       {
         matches: ["*://s5.fourmizzz.fr/*"],
         js: [
+          "js/class/Fuseau.js",
           "js/class/Requetes.js",
           "js/data/couts.js",
           "js/data/menuRapide.js",
