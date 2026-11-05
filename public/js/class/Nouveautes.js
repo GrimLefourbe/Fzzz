@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.80.3",
+    notes: [
+      "Lanceur de flood, méthode « Optimisée » : l'attaque « limite » amène la cible à exactement la moitié de ton TdC (encore à portée) au lieu de garder 1 cm² de marge : 1 cm² de plus par flood optimisé.",
+    ],
+  },
+  {
     version: "1.80.2",
     notes: [
       "Floods partagés : une cible à exactement la moitié du TdC du lanceur est à portée (vérifié sur un rapport de combat). La prise de ces floods n'est plus comptée à tort comme « hors portée » ; les épées de la page Membres suivent la même règle.",
