@@ -27,8 +27,11 @@ const attendre = () => new Promise((r) => setTimeout(r, 20));
 
 /** Un chargement de page : la lecture de la page Reine n'est partagée que dans une même page. */
 function lancer(p: ReturnType<typeof creer>) {
+  // la page de test est à l'adresse d'Armee.php, où l'alerte n'est pas affichée
   p.lire(
-    `Utils._pageReine = null; $.get = () => { LECTURES++; return Promise.resolve(REINE); }; Utils.alertePonte();`,
+    `(() => { Utils._pageReine = null; $.get = () => { LECTURES++; return Promise.resolve(REINE); };
+     let sans = Utils.pageSansAlertePonte; Utils.pageSansAlertePonte = () => false;
+     try { Utils.alertePonte(); } finally { Utils.pageSansAlertePonte = sans; } })()`,
   );
 }
 
@@ -195,5 +198,27 @@ describe("réglage « alerte de fin de ponte »", () => {
   test("valeur déjà enregistrée : gardée", () => {
     expect(valeur({ alertePonte: 3 })).toBe(3);
     expect(valeur({ alertePonte: 0 })).toBe(0);
+  });
+});
+
+describe("pas d'alerte de ponte sur les pages d'attaque et Armée", () => {
+  test("pages concernées", () => {
+    const p = creer("");
+    const sans = (pathname: string, search = "") =>
+      p.lire<boolean>(`Utils.pageSansAlertePonte(${JSON.stringify({ pathname, search })})`);
+    expect(sans("/Armee.php")).toBe(true);
+    expect(sans("/ennemie.php", "?Attaquer=891&lieu=1")).toBe(true);
+    expect(sans("/ennemie.php")).toBe(false);
+    expect(sans("/ennemie.php", "?annuler=5")).toBe(false);
+    expect(sans("/Reine.php")).toBe(false);
+    expect(sans("/construction.php")).toBe(false);
+  });
+  test("page Armée : ni bandeau ni lecture de la page Reine", async () => {
+    const p = creer(pageReine([60]));
+    p.lire(
+      `Utils._pageReine = null; $.get = () => { LECTURES++; return Promise.resolve(REINE); }; Utils.alertePonte();`,
+    );
+    await attendre();
+    expect(p.lire(`[LECTURES, $("#o_alertePonte").length]`)).toEqual([0, 0]);
   });
 });

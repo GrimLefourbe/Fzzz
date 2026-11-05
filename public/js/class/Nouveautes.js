@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.79.2",
+    notes: [
+      "Plus d'alerte de fin de ponte sur la page d'attaque ni sur la page Armée : affichée après coup, elle décalait les boutons sous le doigt. Elle reste sur les autres pages.",
+    ],
+  },
+  {
     version: "1.79.1",
     notes: [
       "Page d'attaque : le bouton « Sonder » indique sa destination : « Sonder (TdC) », « Sonder (Dôme) » ou « Sonder (Loge) ».",

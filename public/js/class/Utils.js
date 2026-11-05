@@ -921,11 +921,28 @@ class Utils {
    * @static
    * @method alertePonte
    */
+  /**
+   * Page d'attaque (ennemie.php?Attaquer=…) ou page Armée.
+   *
+   * @static
+   * @method pageSansAlertePonte
+   * @param {{pathname: String, search: String}} adresse
+   * @return {Boolean}
+   */
+  static pageSansAlertePonte(adresse) {
+    return (
+      /^\/Armee\.php$/i.test(adresse.pathname) ||
+      (/^\/ennemie\.php$/i.test(adresse.pathname) && /[?&]Attaquer=/i.test(adresse.search))
+    );
+  }
   static alertePonte() {
     let seuil = SEUILS_ALERTE_PONTE[parseInt(monProfil.parametre["alertePonte"].valeur)] || 0,
       // une ligne dans la console (F12) pour comprendre une alerte absente
       noter = (texte) => console.info(`[${NOM_EXTENSION}] alerte de ponte : ${texte}`);
     if (!seuil) return noter("désactivée dans Paramètres → Général");
+    // pages où l'on lance ou replace l'armée : un bandeau ajouté après coup
+    // déplacerait les boutons sous le doigt
+    if (Utils.pageSansAlertePonte(location)) return noter("pas sur cette page");
     let surReine = /^\/Reine\.php/i.test(location.pathname),
       connue = Utils.lireStockage(CLE_FIN_PONTE, {});
     // fin de ponte connue, loin du seuil et récente : pas de requête au jeu
