@@ -415,13 +415,13 @@ class Joueur {
    *
    */
   estAttaquable() {
-    return this._terrain >= Utils.terrain * 0.5 + 1 && this._terrain <= Utils.terrain * 3 - 1;
+    return Utils.aPortee(this._terrain, Utils.terrain);
   }
   /**
    *
    */
   estAttaquant() {
-    return this._terrain * 0.5 + 1 <= Utils.terrain && this._terrain * 3 - 1 >= Utils.terrain;
+    return Utils.aPortee(Utils.terrain, this._terrain);
   }
   /**
    *

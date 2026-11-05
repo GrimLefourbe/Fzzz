@@ -9,6 +9,12 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.80.2",
+    notes: [
+      "Floods partagés : une cible à exactement la moitié du TdC du lanceur est à portée (vérifié sur un rapport de combat). La prise de ces floods n'est plus comptée à tort comme « hors portée » ; les épées de la page Membres suivent la même règle.",
+    ],
+  },
+  {
     version: "1.80.1",
     notes: [
       "Retour au lanceur de chasse d'avant la 1.80.0 (page Ressources, onglet « Simuler » de la boîte Chasse) et au simulateur de Calystène : le nouveau lanceur est retiré en attendant d'être mis au point.",
