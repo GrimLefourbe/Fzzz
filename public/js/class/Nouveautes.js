@@ -9,6 +9,15 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.84.0",
+    notes: [
+      "Lanceur de flood : unités gardées affichées sous le lanceur et modifiables pour l'attaque en cours : les antisondes, plus d'autres unités, une ligne par unité (« + ajouter une unité »). Les Préférences (onglet Attaque) en donnent les valeurs par défaut. Une unité choisie garde au plus ce que l'armée en a, et aucune unité gardée ne part.",
+      "Multi-flood : mêmes unités gardées, modifiables pour chaque multi-flood ; rien ne part si les attaques en entameraient.",
+      "Méthode « Dégressive » réglable dans les Préférences : 1re attaque en % du TdC de la cible, puis même part du TdC restant ou écart fixe de 5 points. Le nombre d'attaques proposées est réglable, et les Préférences n'affichent que les réglages de la méthode choisie.",
+      "Corrections du lanceur : « Reste » sur une ligne sans attaque calculée n'est plus perdu, et une attaque sans unité n'est plus envoyée.",
+    ],
+  },
+  {
     version: "1.83.0",
     notes: [
       "Heures : toutes les heures de l'extension (attaques, chasses, convois, pontes, constructions, recherches, partages dans le forum) sont prises sur l'heure du serveur. Un PC ou un téléphone mal réglé ne les décale plus.",
