@@ -9,6 +9,10 @@
 /** Plus récente en premier ; une entrée par version publiée (vérifié par tests/nouveautes.test.ts). */
 const NOUVEAUTES = [
   {
+    version: "1.85.1",
+    notes: ["Préférences → À propos : développement DoggyBag, chasses Grim."],
+  },
+  {
     version: "1.85.0",
     notes: [
       "Chasses (travail de Grim) : un seul lanceur, sur la page Ressources et dans l'onglet « Lancer » de la boîte Chasse. Tu fixes ce que tu veux (nombre de chasses, terrain ou heure de retour, ratio, pertes acceptées, rendement) et le lanceur calcule le reste. Il remplace le simulateur de Calystène.",
