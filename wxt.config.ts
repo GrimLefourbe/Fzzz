@@ -144,6 +144,7 @@ export default defineConfig({
           "js/class/Parametre.js",
           "js/class/SimulationChasse.js",
           "js/class/TroupesDehors.js",
+          "js/class/UnitesGardees.js",
           "js/boite/ComptePlus.js",
           "js/boite/Radar.js",
           "js/boite/Dock.js",
