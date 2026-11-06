@@ -251,6 +251,26 @@ class Joueur {
         unite: " %",
       },
     );
+    // Fzzz : TdC à l'arrivée proposé par le lanceur de chasses = le TdC courant,
+    // au plus cette valeur : au-delà les chasses durent trop longtemps pour que
+    // le TdC du moment soit une prévision sensée, à renseigner soi-même
+    this._parametre["tdcArriveeMax"] = new Parametre(
+      "tdcArriveeMax",
+      "TdC à l'arrivée proposé, au plus",
+      "number",
+      2000000,
+    );
+    // Fzzz : ratio en dessous duquel le lanceur ne descend pas de lui-même
+    // quand le ratio est libre (pertes acceptées fixées). 7,2 :
+    // plus aucune chance de réplique à 50 % ; 6 : l'ancien plancher du lanceur
+    // par budget, où 65 % des chasses subissent 30 % de réplique
+    this._parametre["ratioPlancher"] = new Parametre(
+      "ratioPlancher",
+      "Ratio plancher",
+      "slider",
+      7.2, // SimulationChasse.RATIO_PLANCHER (classe chargée après celle-ci)
+      { min: 3, max: 10, step: 0.1 },
+    );
     return this;
   }
   /**

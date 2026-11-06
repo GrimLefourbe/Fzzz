@@ -118,11 +118,6 @@ export default defineConfig({
           "js/lib/moment-timezone_0.5.48.js",
         ],
       },
-      // simulateur de Calystène (lanceur « Budget de pertes ») : page Ressources seulement
-      {
-        matches: ["*://s5.fourmizzz.fr/Ressources.php*", "*://s5.fourmizzz.fr/ressources.php*"],
-        js: ["js/lib/calystene-chs2_2.00.35.03.js"],
-      },
       {
         matches: ["*://s5.fourmizzz.fr/*"],
         js: [
@@ -143,6 +138,8 @@ export default defineConfig({
           "js/class/OuafSuivi.js",
           "js/class/Parametre.js",
           "js/class/SimulationChasse.js",
+          "js/class/ModeleChasse.js",
+          "js/class/LanceurChasse.js",
           "js/class/TroupesDehors.js",
           "js/class/UnitesGardees.js",
           "js/boite/ComptePlus.js",

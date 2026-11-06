@@ -331,7 +331,6 @@ class Armee {
   /**
    * calcul le nombre d'unité de l'armee.
    *
-   * @private
    * @method getSommeUnite
    * @return {Integer} la somme des unités
    */
@@ -564,23 +563,23 @@ class Armee {
   /* ------------------------------------------------------------------ */
 
   /**
-   * Lance le simulateur de chasse sur cette armée et garde la répartition pour
-   * envoyerChasse. Cf. class/SimulationChasse.js.
+   * Salve d'après ce que le joueur fixe (SimulationChasse.resoudre), avec
+   * l'armée et les niveaux du joueur ; mémorise la répartition pour l'envoi.
    *
-   * @private
-   * @method simulerChasse
-   * @param {Object} p tout ce que SimulationChasse.simuler attend, sauf l'armée et les niveaux
-   * @return {Object} le résultat de la simulation
+   * @method resoudreChasse
+   * @param {Object} p tout ce que SimulationChasse.resoudre attend ; sans
+   *   unites, armes ou bouclier, ceux du joueur
+   * @return {Object|null} le plan, { erreur } ou null
    */
-  simulerChasse(p) {
-    let resultat = SimulationChasse.simuler({
-      ...p,
+  resoudreChasse(p) {
+    let plan = SimulationChasse.resoudre({
       unites: this._unite,
       armes: monProfil.niveauRecherche[2],
       bouclier: monProfil.niveauRecherche[1],
+      ...p,
     });
-    this._repartition = resultat.chasses.map((c) => c.unites);
-    return resultat;
+    this._repartition = plan && plan.chasses ? plan.chasses.map((c) => c.unites) : [];
+    return plan;
   }
   /**
    * Champs du formulaire d'AcquerirTerrain.php pour une chasse. Le jeu numérote
@@ -635,11 +634,12 @@ class Armee {
   /**
    * Envoie une chasse.
    *
-   * @private
    * @method envoyerChasse
+   * @param {Function} fin appelée à la fin (chasses lancées, demandées) ;
+   *   par défaut, rechargement de la page
    * @param {Integer} indice
    */
-  envoyerChasse(terrainChasse, nbChasse, indice, intervalle) {
+  envoyerChasse(terrainChasse, nbChasse, indice, intervalle, fin = () => location.reload()) {
     if (indice < nbChasse) {
       Armee.posterChasse(terrainChasse, this._repartition[indice]).then((data) => {
         if (data.indexOf("La chasse est lancée.") > -1) {
@@ -647,16 +647,18 @@ class Armee {
           $("#o_simulationChasse tr:eq(" + (indice + 1) + ")").html(
             `<td class='green'>${indice + 1}</td><td colspan='14' class='green'>La chasse est lancée.</td>`,
           );
-        } else
+          setTimeout(() => {
+            this.envoyerChasse(terrainChasse, nbChasse, ++indice, intervalle, fin);
+          }, intervalle);
+        } else {
+          // refusée (plus de place, d'unités…) : les suivantes le seraient aussi
           $("#o_simulationChasse tr:eq(" + (indice + 1) + ")").html(
             `<td class='red'>${indice + 1}</td><td colspan='14' class='red'>La chasse n'a pas pu être lancée.</td>`,
           );
-        setTimeout(() => {
-          this.envoyerChasse(terrainChasse, nbChasse, ++indice, intervalle);
-        }, intervalle);
+          fin(indice, nbChasse);
+        }
       });
-    } else // on a fini, on recharge la page
-    location.reload();
+    } else fin(nbChasse, nbChasse);
   }
 
   /* ------------------------------------------------------------------ */
