@@ -265,12 +265,17 @@ describe("fichier introuvable ou illisible : la raison, en rouge", () => {
     return [lire<boolean>(`$("#o_statsMembresEtat").hasClass("red")`), etat()];
   };
 
-  test("sujet absent du forum, forum illisible, script pas à jour", async () => {
+  test("sujet des réglages absent du forum, ou sans la ligne du fichier", async () => {
     expect(await messageDe(`ADRESSE = { url: "", manque: "sujet" }`)).toEqual([
       true,
-      "Stats illisibles : pas de sujet « Stats membres » dans la section cachée du forum.",
+      "Stats illisibles : pas de sujet « Réglages de l'extension » dans la section cachée du forum.",
     ]);
     expect(lire(`APPELS`)).toEqual(["forum"]);
+    lire(`(() => { lectureStatsMembres = null; $("#o_statsMembres").remove(); })()`);
+    expect(await messageDe(`ADRESSE = { url: "", manque: "ligne" }`)).toEqual([
+      true,
+      "Stats illisibles : pas de ligne « Google Sheet des stats membres » dans le sujet « Réglages de l'extension ».",
+    ]);
   });
 
   test("forum illisible", async () => {

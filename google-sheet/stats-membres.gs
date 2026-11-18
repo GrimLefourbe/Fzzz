@@ -14,11 +14,12 @@
  *     Code.gs par ce fichier.
  *  2. Déployer → Nouveau déploiement → type « Application Web » ;
  *     « Exécuter en tant que : moi », « Qui a accès : Tout le monde ».
- *  3. Autoriser, puis copier l'adresse de l'application (…/exec) et la poster
- *     dans le forum de l'alliance, section « BDD partagée cachée », dans le
- *     premier message d'un sujet « Stats membres » : l'extension de chaque
- *     membre la lit toute seule. Pas de réponse dans ce sujet : elle
- *     empêcherait de modifier le message.
+ *  3. Autoriser, puis copier l'adresse de l'application (…/exec) et l'écrire
+ *     dans le forum de l'alliance, section « BDD partagée cachée », sujet
+ *     « Réglages de l'extension », à la ligne « Google Sheet des stats
+ *     membres : … » de son premier message : l'extension de chaque membre la
+ *     lit toute seule (Préférences → Partage de données, section
+ *     « Fonctionnement sur les autres serveurs »).
  * Après une modification de ce code : Enregistrer, puis Déployer → Gérer les
  * déploiements → modifier → Version : Nouvelle version (l'adresse ne change
  * pas). L'adresse ouverte dans le navigateur montre alors la nouvelle
