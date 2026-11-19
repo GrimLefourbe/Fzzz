@@ -47,8 +47,8 @@ const CLE_CONVOIS_ENTRANTS = "fzzz_convoisEntrants";
 // nourritures et 0 materiaux de Krokmou dans 1J 2H 03m 10s » ; un seul montant lu aussi
 const LIGNE_CONVOI_RECU =
   /^Vous allez recevoir (\d[\d ]*?) ?(\D*?)(?: et (\d[\d ]*?) ?(\D*?))? de (\S+(?: \S+){0,3}?) dans ((?:\d+ ?[jhms] ?)+)/i;
-// compte à rebours du jeu : reste(secondes, "id de son span")
-const RESTE_JEU = /reste\(\s*(\d+)\s*,\s*["']([^"']+)["']/;
+// compte à rebours du jeu : reste(secondes, "id de son span"), resteTemps dans l'encart Compte+
+const RESTE_JEU = /reste(?:Temps)?\(\s*(\d+)\s*,\s*["']([^"']+)["']/;
 // entrepôt en construction, par joueur : vu dans l'encart Compte+ du jeu ou sur
 // la page Construction, gardé après sa fin tant que le niveau connu ne le compte pas
 const CLE_CHANTIER_ENTREPOT = "fzzz_chantierEntrepot";

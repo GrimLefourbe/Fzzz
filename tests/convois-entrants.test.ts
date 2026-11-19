@@ -147,6 +147,12 @@ describe("lignes des convois qui arrivent, quelle que soit leur forme", () => {
         `<strong>- Vous allez recevoir 0 <img alt="nourritures"/> et 300 <img alt="materiaux"/> de <a href="Membre.php?Pseudo=Delta">Delta</a> dans <span id="convoi_9"></span></strong><script language="JavaScript">reste(600, "convoi_9");</script><br />`,
       ),
     ).toEqual([{ de: "Delta", t: HEURE + 600 * 1000, q: [0, 300] }]);
+    // forme de l'encart Compte+ du jeu
+    expect(
+      lireConvois(
+        `<span>- Vous allez recevoir 0 et 300 de <a>Delta</a> dans <a id="temps_convoi"></a></span><script>$(function() { resteTemps(900,"temps_convoi"); });</script><br />`,
+      ),
+    ).toEqual([{ de: "Delta", t: HEURE + 900 * 1000, q: [0, 300] }]);
   });
 
   test("la ressource suit le nom de l'icône, pas l'ordre ; un seul montant", () => {
