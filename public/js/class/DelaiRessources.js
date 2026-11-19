@@ -353,7 +353,9 @@ class DelaiRessources {
     let trop = manquent.filter((i) => res(i).trop);
     if (trop.length)
       return {
-        html: trop.map((i) => DelaiRessources.requis(i, res(i).cout)).join("<br/>"),
+        html: trop
+          .map((i) => `<div class='o_delaiRequis'>${DelaiRessources.requis(i, res(i).cout)}</div>`)
+          .join(""),
         requis: true,
       };
     if (manquent.some((i) => DelaiRessources._jamais(res(i))))
@@ -396,7 +398,7 @@ class DelaiRessources {
         if ($jeu.length) $jeu.last().after($ligne);
         else $td.find("table").first().append($ligne);
       }
-      $ligne.find(".o_delaiValeur").html(v.html).toggleClass("o_delaiRequis", v.requis);
+      $ligne.find(".o_delaiValeur").html(v.html);
     });
   }
   /**

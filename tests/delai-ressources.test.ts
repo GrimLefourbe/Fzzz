@@ -357,9 +357,10 @@ const ligneHorloge = (rang: number) =>
     const td = $(".o_delaiRessources").eq(${rang}),
       l = td.find("tr.o_delaiLigne"),
       jeu = td.find("tr[title^='Temps pour récolter']");
+    const v = l.find(".o_delaiValeur"), requis = v.find(".o_delaiRequis");
     return {
-      valeur: l.length ? l.find(".o_delaiValeur").html() : null,
-      requis: l.find(".o_delaiValeur").hasClass("o_delaiRequis"),
+      valeur: !l.length ? null : requis.length ? requis.map((i, e) => $(e).text()).get().join(" / ") : v.text(),
+      requis: requis.length > 0,
       jeu: jeu.length ? jeu.css("display") : null,
       derniere: td.find("table tr").last().hasClass("o_delaiLigne"),
     };
@@ -421,7 +422,7 @@ describe("cellule du coût : notre délai à la place de celui du Compte+", () =
     );
     expect(ligneHorloge(0)).toMatchObject({
       valeur:
-        "REQUIS : Entrepôt de Nourriture niveau 16<br>REQUIS : Entrepôt de Matériaux niveau 14",
+        "REQUIS : Entrepôt de Nourriture niveau 16 / REQUIS : Entrepôt de Matériaux niveau 14",
       requis: true,
     });
     await ouvrir(
@@ -433,7 +434,7 @@ describe("cellule du coût : notre délai à la place de celui du Compte+", () =
     );
     expect(ligneHorloge(0)).toMatchObject({ valeur: "jamais", requis: false });
     // 1 bois par récolte : pas d'ici un an
-    expect(ligneHorloge(1)).toMatchObject({ valeur: "&gt; 1 an", requis: false });
+    expect(ligneHorloge(1)).toMatchObject({ valeur: "> 1 an", requis: false });
   });
 
   test("rien ne manque : pas de ligne ; production inconnue : « ? »", async () => {
