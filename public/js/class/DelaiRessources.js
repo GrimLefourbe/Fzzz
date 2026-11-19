@@ -325,6 +325,12 @@ class DelaiRessources {
       notes.push(
         `Page Convois pas relue (${Utils.echapper(lecture.raison || "")}) : convois de ta dernière visite.`,
       );
+    else if (Entrepots.convoisIllisibles > 1)
+      notes.push(
+        `${Entrepots.convoisIllisibles} convois qui arrivent n'ont pas pu être lus sur la page Convois : pas comptés.`,
+      );
+    else if (Entrepots.convoisIllisibles)
+      notes.push("Un convoi qui arrive n'a pas pu être lu sur la page Convois : pas compté.");
     if (etat.prochaine == null)
       notes.push("Heure des récoltes inconnue : ouvre la page Ressources.");
     return notes;
