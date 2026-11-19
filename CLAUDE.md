@@ -208,7 +208,7 @@ Reserved to the maintainer (maintainer rule, 1.87.1): only the pseudos of the «
 
 ### Release notes in the game (Fzzz 1.50)
 
-After an update, a toast lists the notes of the versions released since the last one the player saw, from `NOUVEAUTES` in `public/js/class/Nouveautes.js` (player-facing French, not detailed: at most two sentences per version, all its notes together, maintainer rule of 19/11/2026, checked from 1.141.0 by `tests/nouveautes.test.ts`). Every version bump needs a new first entry: `tests/nouveautes.test.ts` fails if `NOUVEAUTES[0].version` differs from `package.json`. Do not link the toast to GitHub releases: the latest release there is the signed Firefox build, usually older than the userscript.
+After an update, a toast lists the notes of the versions released since the last one the player saw, from `NOUVEAUTES` in `public/js/class/Nouveautes.js` (player-facing French, not detailed: at most two sentences per version, all its notes together, maintainer rule of 19/11/2026, checked from 1.141.0 by `tests/nouveautes.test.ts`; the toast still shows every version the player missed, two sentences each: maintainer's choice of the same day). Every version bump needs a new first entry: `tests/nouveautes.test.ts` fails if `NOUVEAUTES[0].version` differs from `package.json`. Do not link the toast to GitHub releases: the latest release there is the signed Firefox build, usually older than the userscript.
 
 ## MV3 CSP constraints
 
