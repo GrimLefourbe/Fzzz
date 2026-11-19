@@ -1002,7 +1002,7 @@ class BoiteParametre extends Boite {
           .map(([cle, texte]) => `<li>« ${REGLAGES_ALLIANCE[cle].nom} : … » : ${texte}</li>`)
           .join(
             "",
-          )}</ul><b>Sujets « ${SUJETS_COMMUNS.Floods} » et « ${SUJETS_COMMUNS.Chasses} »</b> : créés à la main ; l'extension de chaque joueur y écrit sa réponse avec ses floods et ses chasses en cours. <b>Sujets « ${TITRE_GIF_ALLIANCE} » et « ${TITRE_SMILEYS_ALLIANCE} »</b> : les images de leur premier message, pour les chats, la messagerie et le forum. L'extension écrit elle-même les sujets « Convois | pseudo » (suivi des convois) et « Historique Chasses N | pseudo ». Chaque joueur règle ici son propre Google Sheet s'il n'est pas dans la liste des RC, et dans l'onglet Convois le mot de passe du site de suivi. Les réglages sont relus au plus une fois par heure, et quand une fonction en a besoin.`,
+          )}</ul><b>Sujets « ${SUJETS_COMMUNS.Floods} » et « ${SUJETS_COMMUNS.Chasses} »</b> : créés à la main ; l'extension de chaque joueur y écrit sa réponse avec ses floods et ses chasses en cours. <b>Sujets « ${TITRE_GIF_ALLIANCE} » et « ${TITRE_SMILEYS_ALLIANCE} »</b> : les images de leur premier message, pour les chats, la messagerie et le forum. L'extension écrit elle-même les sujets « Convois | pseudo » (suivi des convois). Chaque joueur règle ici son propre Google Sheet s'il n'est pas dans la liste des RC, et dans l'onglet Convois le mot de passe du site de suivi. Les réglages sont relus au plus une fois par heure, et quand une fonction en a besoin.`,
       ) +
       "<p id='o_reglagesEtat' class='left small'></p><p class='left o_reglage'><button type='button' class='o_button f_info o_reglagesRelire'>Relire les réglages</button></p>"
     );
@@ -1080,7 +1080,7 @@ class BoiteParametre extends Boite {
                 "Ranger le forum",
                 this.aide(
                   `Les floods et les chasses sont partagés dans les sujets « ${SUJETS_COMMUNS.Floods} » et « ${SUJETS_COMMUNS.Chasses} » de la section cachée, une réponse par joueur, que son extension écrit et modifie.`,
-                  "Ce bouton retire les floods et chasses des anciens formats : les sections du premier message de ces deux sujets, et les sujets « Floods | pseudo » et « Chasses | pseudo », supprimés. Les chasses passées vont d'abord dans l'historique de leur joueur, les floods passés sont supprimés (pas d'historique des floods) ; les entrées à venir sont supprimées, chaque joueur les partage de nouveau. Un joueur pas encore à jour peut les réécrire : reclique plus tard. Il faut les droits de gestion du forum. Une lecture du forum par chasseur concerné, environ 0,4 s chacune ; reste sur la page jusqu'au bilan.",
+                  "Ce bouton retire les floods et chasses des anciens formats : les sections du premier message de ces deux sujets, et les sujets « Floods | pseudo » et « Chasses | pseudo », supprimés avec toutes leurs entrées, sans historique : chaque joueur partage de nouveau celles à venir. Un joueur pas encore à jour peut les réécrire : reclique plus tard. Il faut les droits de gestion du forum ; reste sur la page jusqu'au bilan.",
                 ) +
                   `<p class='left o_reglage'><button type='button' class='o_button f_info o_partageRanger'>Ranger le forum</button></p>
                   <p id='o_partageRangerEtat' class='left small'></p>`,
@@ -1140,7 +1140,7 @@ class BoiteParametre extends Boite {
       // supprimer des sujets ne se défait pas
       if (
         !confirm(
-          "Retirer les floods et chasses des anciens formats (sections du premier message des sujets communs, sujets « Floods | pseudo » et « Chasses | pseudo », supprimés) ? Les chasses passées vont dans l'historique de leur joueur, les floods passés et toutes les entrées à venir sont supprimés.",
+          "Retirer les floods et chasses des anciens formats (sections du premier message des sujets communs, sujets « Floods | pseudo » et « Chasses | pseudo », supprimés) ? Toutes leurs entrées sont supprimées, sans historique.",
         )
       )
         return;
