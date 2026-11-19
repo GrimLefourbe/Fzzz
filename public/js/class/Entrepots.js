@@ -218,7 +218,9 @@ class Entrepots {
    * @return {Number|null} null si le niveau est inconnu
    */
   static tauxColonie(niveauEtable) {
-    return niveauEtable >= 0 ? TAXE_COLONIE + TAXE_COLONIE_PAR_NIVEAU * niveauEtable : null;
+    return Number.isInteger(niveauEtable) && niveauEtable >= 0
+      ? TAXE_COLONIE + TAXE_COLONIE_PAR_NIVEAU * niveauEtable
+      : null;
   }
   /**
    * Bilan du jour : production, consommation de l'armée, pillage subi et

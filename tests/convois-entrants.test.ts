@@ -83,6 +83,33 @@ describe("convois qui arrivent, gardés à chaque visite de la page Convois", ()
   });
 });
 
+describe("ligne « Info : Niveau d'étable » du formulaire", () => {
+  const info = (niveaux: unknown) =>
+    lire(`(() => {
+      monProfil.niveauConstruction = ${JSON.stringify(niveaux)};
+      document.body.innerHTML = '<div id="data"><div id="pseudo">Moi</div></div><div id="centre"><form><table><tr><td>formulaire</td></tr></table></form></div>';
+      new PageCommerce({ convoi: [], sauvegarder() { return this; }, majConvoi() {} }).executer();
+      return $("form table tr.centre").text().replace(/\\s+/g, " ").trim();
+    })()`);
+  const etable = (n: unknown) => [-1, 10, 13, 0, 0, 0, 0, 0, 0, 0, 0, n, 0];
+
+  test("niveau connu : la capacité d'une ouvrière", () => {
+    expect(info(etable(6))).toBe(
+      "Info : Niveau d'étable 6, 1 ouvrière peut transporter : 13 ressources.",
+    );
+  });
+
+  test("niveau inconnu (jamais lu, ou effacé par une version précédente) : dit, avec le lien, jamais « null »", () => {
+    for (const n of [null, -1]) {
+      expect(info(etable(n))).toBe(
+        "Info : Niveau d'étable inconnu, ouvre la page Construction pour qu'il soit lu ; d'ici là, 1 ouvrière est comptée pour 10 ressources.",
+      );
+      expect(lire(`$("form table tr.centre a").attr("href")`)).toBe("construction.php");
+    }
+    lire(`monProfil.niveauConstruction = [-1, 10, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4]`);
+  });
+});
+
 /**
  * Balise des lignes « Vous allez recevoir » inconnue (le mainteneur, Compte+,
  * 19/11/2026 : deux convois affichés, aucun lu par l'ancienne lecture des
