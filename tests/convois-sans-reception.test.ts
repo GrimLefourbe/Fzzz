@@ -208,6 +208,16 @@ describe("Récapitulatif : marques d'un joueur qui ne veut pas de convois, cumul
     expect(css).toContain(".o_convoisMembres tr.o_convoisRouge a {\n  color: var(--fzzz-erreur);");
     // la colonne se replie sur téléphone (« ⚠️ Plein ⚠️ » sur deux lignes)
     expect(css).toContain(".o_convoisMembres td.o_convoisMembreStatut {\n  white-space: normal;");
+    // plus large que le cadre (téléphone, colonne cochée par défaut) : le tableau défile, la page ne s'élargit pas
+    expect(css).toContain(".o_convoisMembresDefile {\n  max-width: 100%;\n  overflow-x: auto;");
+    expect(css).not.toMatch(/#o_convoisMembres \{[^}]*min-width: min-content/);
+  });
+
+  test("le tableau est dans son conteneur qui défile", async () => {
+    await ouvrir();
+    expect(
+      lire(`$("#o_convoisMembres .o_convoisMembresDefile > table.o_convoisMembres").length`),
+    ).toBe(1);
   });
 });
 
