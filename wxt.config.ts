@@ -193,6 +193,7 @@ export default defineConfig({
           "js/class/SimulationChasse.js",
           "js/class/ModeleChasse.js",
           "js/class/LanceurChasse.js",
+          "js/class/AlerteFloods.js",
           "js/class/TroupesDehors.js",
           "js/class/UnitesGardees.js",
           "js/boite/ComptePlus.js",
