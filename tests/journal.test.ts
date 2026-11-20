@@ -83,7 +83,10 @@ describe("boîte réservée aux joueurs de la ligne « Journal » des réglages 
     // installé sans condition, et plus jamais effacé au chargement
     expect(content).toMatch(/^\s*Journal\.installer\(\);$/m);
     expect(content).not.toContain("Journal.vider(");
-    expect(content).toMatch(/Journal\.pourCeJoueur\(\)\)\s*new BoiteJournal\(\)\.afficher\(\)/);
+    // la boîte, elle, dépend toujours de la ligne « Journal » (dans la même condition)
+    expect(content).toMatch(
+      /Journal\.pourCeJoueur\(\)[^;]{0,80}new BoiteJournal\(\)\.afficher\(\)/,
+    );
   });
 
   test("avant son installation (début de chaque page), rien n'est noté", () => {
