@@ -501,10 +501,8 @@ const DATEPICKER_OPTION = {
       return;
     }
     // notifications, erreurs de console et erreurs JavaScript dans le journal,
-    // pour son seul joueur ; chez les autres, rien n'est gardé (le journal
-    // d'une version précédente est effacé)
-    if (Journal.pourCeJoueur()) Journal.installer();
-    else Journal.vider();
+    // pour tous : chacun peut le copier (Préférences → Général) pour signaler un bug
+    Journal.installer();
     // affichages sans case dans les Préférences : état par défaut pour tous
     Utils.oublierAffichagesFixes();
     // Modification du theme jquery humanity
