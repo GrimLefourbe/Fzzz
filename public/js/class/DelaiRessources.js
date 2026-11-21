@@ -417,12 +417,14 @@ class DelaiRessources {
    * @return {Promise<Array<{de: String, t: Number, q: Array<Number>}>>} convois qui arrivent
    */
   static chargerConvois() {
-    return Promise.resolve($.ajax({ url: "/commerce.php", timeout: MS_LECTURE_CONVOIS })).then(
+    DelaiRessources._pageConvois = Promise.resolve(
+      $.ajax({ url: "/commerce.php", timeout: MS_LECTURE_CONVOIS }),
+    ).then(
       (html) => {
         let $page = Utils.parseHtml(String(html));
         if (!$page.find("#centre").length || !$page.find("#quantite_tdc").length)
           throw new Error("la réponse n'est pas la page Convois");
-        return Entrepots.lireConvois($page, Horloge.maintenant());
+        return $page;
       },
       (/** @type {any} */ jqXHR) => {
         throw new Error(
@@ -432,6 +434,21 @@ class DelaiRessources {
         );
       },
     );
+    return DelaiRessources._pageConvois.then(($page) =>
+      Entrepots.lireConvois($page, Horloge.maintenant()),
+    );
+  }
+  /**
+   * Page Convois de cette page : celle que chargerConvois a lue à l'ouverture
+   * de Construction ou Laboratoire, sinon lue maintenant.
+   *
+   * @static
+   * @method pageConvois
+   * @return {Promise<any>} la page (jQuery) ; rejetée si elle est illisible
+   */
+  static pageConvois() {
+    if (!DelaiRessources._pageConvois) DelaiRessources.chargerConvois().catch(() => {});
+    return /** @type {Promise<any>} */ (DelaiRessources._pageConvois);
   }
   /**
    * Relit la page Convois et pose l'info-bulle sur le coût de chaque bâtiment
@@ -556,3 +573,5 @@ class DelaiRessources {
 DelaiRessources._ouverture = /** @type {Number|null} */ (null);
 /** lecture de la page Convois : lecture, lu ou echec (raison) */
 DelaiRessources._convois = { etat: "lecture", raison: "" };
+/** page Convois lue à l'ouverture (jQuery), partagée avec le bloc de rentabilité de l'étable */
+DelaiRessources._pageConvois = /** @type {Promise<any>|null} */ (null);
