@@ -756,6 +756,7 @@ const DATEPICKER_OPTION = {
               break;
             case uri == "/Reine.php":
               page = new PageReine(boiteComptePlus);
+              PageReine.finPontes();
               // Le Compte+ affiche déjà le nombre d'unités. nombreUnites() passe
               // après plus(), qui lit le texte brut des <h2>.
               if (!Utils.comptePlus) {
