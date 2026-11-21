@@ -593,7 +593,8 @@ class AttaqueLancee {
                       partagees,
                       [{ debut: minute(g.chasses[0].impact), fin: e.date, terrain: e.terrain }],
                       maintenant,
-                    ).lignes.length > 0
+                      PartageChasses.decalageMax("Chasses"),
+                    ).lignes.some((l) => l.reel == e.date)
                   : true,
               });
             } else if (String(e.lanceur).toLowerCase() == m) {
