@@ -1927,7 +1927,7 @@ html:not(.o_desactivee):not(.o_originePage) center > div > #tabMembresAlliance {
 /* Correctif jquerui pour outiiil */
 .ui-tooltip {
   opacity: 1 !important;
-  max-width: 400px !important;
+  max-width: min(400px, calc(100vw - 16px)) !important;
 }
 .ui-tooltip-lightBrown {
   background-color: #d7c384 !important;
@@ -2939,6 +2939,10 @@ html:not(.o_desactivee):not(.o_originePage) #tabMembresAlliance tbody tr.o_allMo
   #o_syntheseChasses table {
     max-width: 100%;
   }
+  /* liste des unités lisible : le tableau défile plutôt que de l'écraser */
+  #o_syntheseChasses .o_syntheseUnites {
+    min-width: 14em;
+  }
   .o_attaquesLancees td,
   .o_attaquesLancees th,
   #o_chassesPartagees td {
@@ -2985,8 +2989,9 @@ html:not(.o_desactivee):not(.o_originePage) #tabMembresAlliance tbody tr.o_allMo
   }
   /* page Membres : le tableau défile dans son cadre, largeur fixe désactivée */
   html:not(.o_desactivee):not(.o_originePage) #tabMembresAlliance_wrapper {
-    width: auto !important;
-    max-width: calc(100vw - 24px);
+    /* la largeur de sa case du jeu, sans l'élargir (100vw dépassait de 5 px) */
+    width: 0 !important;
+    min-width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }

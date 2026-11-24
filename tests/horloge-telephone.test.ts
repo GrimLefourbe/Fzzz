@@ -44,7 +44,9 @@ async function ouvrir(encart: Rect | null, menu: Rect | null, retenue: object | 
     Object.defineProperty(HTMLElement.prototype, "offsetHeight", { configurable: true, get() { return this.id == "o_horloge" ? 24 : 0; } });
     Object.defineProperty(document.documentElement, "clientWidth", { configurable: true, get: () => 1300 });
     Object.defineProperty(document.documentElement, "clientHeight", { configurable: true, get: () => 900 });
+    // une vraie page n'a qu'une horloge : celles des tests précédents se taisent
     $("#o_horloge").remove();
+    $(window).off("load resize");
     Horloge.afficher();
   })()`);
   await new Promise((r) => setTimeout(r, 0));
@@ -103,4 +105,52 @@ describe("horloge et menu du jeu sur téléphone", () => {
     expect(bloc).toContain("#o_horloge {\n    visibility: hidden !important;");
     expect(bloc).toContain("#o_horloge.o_horlogeSousMenu:not(.o_horlogeMasquee)) #centre");
   });
+});
+
+describe("ce qui se place sous le menu passe sous l'horloge", () => {
+  const sous = creerPage(["js/class/Utils.js", "js/class/AttaqueLancee.js"], "");
+  /** Barre du menu de 48 px (affichage mobile : elle défile avec la page) et horloge en dessous. */
+  const preparer = (classes: string) =>
+    sous.lire(`(() => {
+      document.body.innerHTML = "<div id='centre'><nav id='menu' style='position: absolute'></nav><div id='bloc'></div></div><div id='o_horloge' class='${classes}'></div>";
+      document.getElementById("menu").getBoundingClientRect = () => ({ left: 0, right: 412, top: 0, bottom: 48, width: 412, height: 48 });
+      document.getElementById("o_horloge").getBoundingClientRect = () => ({ left: 15, right: 295, top: 52, bottom: 76, width: 280, height: 24 });
+      // sans marge, le bloc commence sous la barre
+      document.getElementById("bloc").getBoundingClientRect = () => ({ left: 0, right: 412, top: 48, bottom: 100, width: 412, height: 52 });
+    })()`);
+
+  test("Utils.calerSousMenu : sous l'horloge quand elle est sous le menu, sinon sous le menu", () => {
+    preparer("o_horlogeSousMenu");
+    expect(sous.lire(`Utils.basHorlogeSousMenu()`)).toBe(76);
+    sous.lire(`Utils.calerSousMenu(document.getElementById("bloc"), 6)`);
+    expect(sous.lire(`document.getElementById("bloc").style.marginTop`)).toBe("34px");
+    for (const classes of ["o_horlogeSousMenu o_horlogeMasquee", ""]) {
+      preparer(classes);
+      expect(sous.lire(`Utils.basHorlogeSousMenu()`)).toBe(0);
+      sous.lire(`Utils.calerSousMenu(document.getElementById("bloc"), 6)`);
+      expect(sous.lire(`document.getElementById("bloc").style.marginTop`)).toBe("6px");
+    }
+  });
+
+  test("« Mes attaques en cours » épinglé : collé sous l'horloge en défilant, et recalé quand elle se place", () => {
+    preparer("");
+    sous.lire(`AttaqueLancee.epingler(document.getElementById("bloc"))`);
+    expect(sous.lire(`document.getElementById("bloc").style.top`)).toBe("0px");
+    sous.lire(
+      `$("#o_horloge").addClass("o_horlogeSousMenu"); $(document).trigger(EVENEMENT_HORLOGE_PLACEE)`,
+    );
+    expect(sous.lire(`document.getElementById("bloc").style.top`)).toBe("76px");
+  });
+});
+
+test("l'horloge annonce son passage sous le menu, une fois", async () => {
+  const annonces = () =>
+    lire(
+      `(() => { window.PLACEES = 0; $(document).off(EVENEMENT_HORLOGE_PLACEE).on(EVENEMENT_HORLOGE_PLACEE, () => PLACEES++); })()`,
+    );
+  annonces();
+  await ouvrir({ left: 15, top: -980, right: 235, bottom: -820 }, MENU_TELEPHONE);
+  expect(lire(`PLACEES`)).toBe(1);
+  lire(`$(window).trigger("resize")`);
+  expect(lire(`PLACEES`)).toBe(1);
 });
