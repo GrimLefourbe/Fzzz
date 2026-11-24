@@ -11,7 +11,7 @@ const NOUVEAUTES = [
   {
     version: "1.156.1",
     notes: [
-      "Téléphone sans « site pour ordinateur » : l'horloge ne cache plus le menu du jeu (sa première icône ouvre les encadrés, dont celui de l'extension), et la liste des Ennemies, la synthèse des chasses et la ligne d'envoi du chat n'élargissent plus la page.",
+      "Téléphone sans « site pour ordinateur » : l'horloge ne cache plus le menu du jeu (sa première icône ouvre les encadrés, dont celui de l'extension), ni le bloc « Mes attaques en cours » et les bandeaux placés sous le menu. Les listes des Ennemies et des Membres, la synthèse des chasses et la ligne d'envoi du chat n'élargissent plus la page.",
     ],
   },
   {
