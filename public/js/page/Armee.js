@@ -411,7 +411,7 @@ class PageArmee {
    * Unité d'une antisonde : celle des préférences si l'armée en a, sinon la
    * première disponible.
    *
-   * @method indiceNomUnite
+   * @method indiceUnite
    * @param {String} cle réglage « uniteAntisondeTerrainType » ou « uniteAntisondeDomeType »
    * @return {Integer} indice dans Armee.unite, -1 si l'armée est vide
    */
