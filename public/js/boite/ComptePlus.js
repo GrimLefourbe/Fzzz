@@ -512,8 +512,8 @@ class BoiteComptePlus {
         nombreU = this._ponte[i]["nombre"];
         tempsU =
           nombreU > 1
-            ? TEMPS_UNITE[NOM_UNITES.indexOf(this._ponte[i].unite)]
-            : TEMPS_UNITE[NOM_UNITE.indexOf(this._ponte[i].unite)];
+            ? TEMPS_UNITE[Utils.indiceNomUnite(this._ponte[i].unite, NOM_UNITES)]
+            : TEMPS_UNITE[Utils.indiceNomUnite(this._ponte[i].unite)];
         if (i == 0)
           nombreU = Math.ceil(
             moment(this._ponte[i].exp).diff(Horloge.serveur()) /

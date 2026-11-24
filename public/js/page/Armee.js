@@ -188,9 +188,11 @@ class PageArmee {
       .find("tr[align=center]")
       .slice(0, 14)
       .each((i, ligne) => {
-        let unite = $(ligne).find(".pas_sur_telephone").text(),
+        let libelle = $(ligne).find(".pas_sur_telephone").text(),
           $cases = $(ligne).find("td");
-        if (!unite) return;
+        if (!libelle) return;
+        // nom de NOM_UNITE (clés lues par Armee), quelle que soit l'écriture du jeu
+        let unite = NOM_UNITE[Utils.indiceNomUnite(libelle)] || libelle;
         let tdc = nombre($(ligne).find("td:nth-child(3) span")),
           loge = nombre($(ligne).find("td:nth-last-child(2)"));
         if (tdc) lieux.tdc[unite] = tdc;
@@ -409,7 +411,7 @@ class PageArmee {
    * Unité d'une antisonde : celle des préférences si l'armée en a, sinon la
    * première disponible.
    *
-   * @method indiceUnite
+   * @method indiceNomUnite
    * @param {String} cle réglage « uniteAntisondeTerrainType » ou « uniteAntisondeDomeType »
    * @return {Integer} indice dans Armee.unite, -1 si l'armée est vide
    */
@@ -446,7 +448,10 @@ class PageArmee {
    * @return {String}
    */
   static valeurUnite(i) {
-    let option = $("#ChoixUnite option").filter((k, o) => o.textContent.trim() == NOM_UNITE[i + 1]);
+    let option = $("#ChoixUnite option").filter(
+      (k, o) =>
+        o.textContent.trim() == NOM_UNITE[i + 1] || Utils.indiceNomUnite(o.textContent) == i + 1,
+    );
     return option.length ? option.val() : "unite" + CHOIX_UNITE_JEU[i];
   }
   /**

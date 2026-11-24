@@ -970,6 +970,43 @@ class Utils {
     return { ouvrieres: ouvrieres, brut: brut, reine: true };
   }
   /**
+   * Nom d'unité réduit à ce qui le distingue : minuscules, sans accents,
+   * apostrophe droite, espaces simples. Le jeu a changé la casse et les
+   * accents de ses libellés (« Naine d’Elite » puis « Naine d’Élite »).
+   *
+   * @static
+   * @method cleUnite
+   * @param {String} texte
+   * @return {String}
+   */
+  static cleUnite(texte) {
+    return String(texte == null ? "" : texte)
+      .toLowerCase()
+      .replace(/[’`]/g, "'")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  /**
+   * Indice d'un nom d'unité dans NOM_UNITE (ou la table donnée), ou -1 : le
+   * nom exact d'abord, comme `noms.indexOf(texte)`, sinon le même nom à la
+   * casse, aux accents, à l'apostrophe et aux espaces près. Le texte entier
+   * doit être le nom (cf. uniteDepuisLibelle pour un nom dans une phrase).
+   *
+   * @static
+   * @method indiceNomUnite
+   * @param {String} texte
+   * @param {Array<String>} [noms] NOM_UNITE par défaut, ou NOM_UNITES
+   * @return {Number}
+   */
+  static indiceNomUnite(texte, noms = NOM_UNITE) {
+    let exact = noms.indexOf(texte);
+    if (exact >= 0) return exact;
+    let cle = Utils.cleUnite(texte);
+    return cle ? noms.findIndex((n) => Utils.cleUnite(n) == cle) : -1;
+  }
+  /**
    * Indice (dans NOM_UNITE) de l'unité nommée dans un texte, ou -1. Le nom
    * le plus long l'emporte (« Artilleuse d'élite » avant « Artilleuse »).
    *

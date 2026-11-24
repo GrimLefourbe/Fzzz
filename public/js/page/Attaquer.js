@@ -432,7 +432,11 @@ class PageAttaquer {
         (somme, k) => somme + (parseInt($td.eq(k).text().replace(/\D/g, "")) || 0),
         0,
       );
-      if (nb > 0) dispo[$td.eq(0).text().trim()] = { id: $champ.attr("id"), nb };
+      if (nb > 0) {
+        // nom de NOM_UNITE (préférences, coûts), quelle que soit l'écriture du jeu
+        let libelle = $td.eq(0).text().trim();
+        dispo[NOM_UNITE[Utils.indiceNomUnite(libelle)] || libelle] = { id: $champ.attr("id"), nb };
+      }
     });
     return dispo;
   }

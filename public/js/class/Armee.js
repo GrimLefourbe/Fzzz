@@ -179,7 +179,7 @@ class Armee {
             .each((i2, elt2) => {
               // id du jeu : (nombre,'uniteX',lieu)
               if (lieu && !($(elt2).attr("id") || "").endsWith("," + lieu + ")")) return;
-              this._unite[NOM_UNITE.indexOf(label) - 1] += parseInt(
+              this._unite[Utils.indiceNomUnite(label) - 1] += parseInt(
                 $(elt2)
                   .text()
                   .replace(/[^0-9]/g, ""),

@@ -166,6 +166,32 @@ describe("garnison lue dans son tableau", () => {
     ]);
     expect(page.lire(`PageArmee.garnisonDe("<p>Une autre action est en cours</p>")`)).toBeNull();
   });
+
+  test("libellé du jeu de novembre 2026 (« Naine d’Élite ») : compté comme « Naine d’Elite »", () => {
+    const lieux = page.lire(`(() => {
+      let html = pageArmee({ tdc: [1234, 0, 5], dome: [0, 7, 0], loge: [282, 0, 3] }, "j")
+        .replace("Naine d’Elite", "Naine d’Élite");
+      let g = PageArmee.garnisonDe(html);
+      return [/Naine d’Élite/.test(html), g.tdc.unite.slice(0, 3), g.dome.unite.slice(0, 3), g.loge.unite.slice(0, 3)];
+    })()`);
+    expect(lieux).toEqual([true, [1234, 0, 5], [0, 7, 0], [282, 0, 3]]);
+  });
+
+  test("liste « Déplacer » : option trouvée par son nom, ancien ou nouveau libellé", () => {
+    const valeurs = page.lire(`(() => {
+      let liste = (nom) => {
+        document.body.innerHTML = "<select id='ChoixUnite'><option value='unite1'>Jeune Soldate Naine</option><option value='unite7'>" + nom + "</option></select>";
+        return [PageArmee.valeurUnite(0), PageArmee.valeurUnite(2)];
+      };
+      let r = [liste("Naine d’Elite"), liste("Naine d’Élite")];
+      document.body.innerHTML = "";
+      return r;
+    })()`);
+    expect(valeurs).toEqual([
+      ["unite1", "unite7"],
+      ["unite1", "unite7"],
+    ]);
+  });
 });
 
 describe("déplacements prévus", () => {
