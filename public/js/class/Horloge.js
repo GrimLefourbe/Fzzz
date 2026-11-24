@@ -207,8 +207,23 @@ class Horloge {
           if (taille == 20 || h.scrollWidth <= h.clientWidth) break;
         }
         $("#o_horlogeHeure").css("font-size", "0.7em");
+        // affichage mobile du jeu : l'encart est hors de l'écran tant que son
+        // menu est fermé ; l'horloge va sous la barre du menu, pas dessus, et
+        // le haut de la page lui laisse sa place (o_horlogeSousMenu, CSS)
+        let x = r ? r.left : 8,
+          m = document.getElementById("menu")?.getBoundingClientRect(),
+          sousMenu =
+            !retenue &&
+            !(r && r.bottom > 0) &&
+            !!m &&
+            m.height > 0 &&
+            x < m.right &&
+            x + h.offsetWidth > m.left;
+        h.classList.toggle("o_horlogeSousMenu", sousMenu);
+        document.documentElement.style.setProperty("--o-horloge-hauteur", h.offsetHeight + "px");
         if (retenue) placer(retenue.x, retenue.y);
-        else placer(r ? r.left : 8, r ? r.top - h.offsetHeight - 6 : 8);
+        else if (sousMenu && m) placer(x, m.bottom + 4);
+        else placer(x, r && r.bottom > 0 ? r.top - h.offsetHeight - 6 : 8);
       },
       appliquer = (pos) => {
         retenue = pos && pos.x != null ? pos : null;
