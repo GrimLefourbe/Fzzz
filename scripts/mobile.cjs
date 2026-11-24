@@ -17,7 +17,7 @@
 const { chromium } = require("playwright");
 const fs = require("fs"),
   path = require("path"),
-  { fichierRequete, pagesPresentes, PAGES_JEU } = require("./pages-enregistrees.cjs");
+  { pagesPresentes, servir, PAGES_JEU } = require("./pages-enregistrees.cjs");
 
 const EXTENSION = path.join(__dirname, "..", ".output", "chrome-mv3"),
   [dossier, liste] = process.argv.slice(2);
@@ -92,6 +92,9 @@ const REGLAGES_SIMULES = JSON.stringify({
       const ctx = await chromium.launchPersistentContext("", {
         channel: "chromium",
         headless: true,
+        // un joueur en France : sans ça, l'horloge ajoute la ligne « Chez toi »
+        timezoneId: "Europe/Paris",
+        locale: "fr-FR",
         hasTouch: nom != "pc",
         ...appareil,
         args: avecExtension
@@ -99,24 +102,13 @@ const REGLAGES_SIMULES = JSON.stringify({
           : [],
       });
       // pages et feuille du jeu servies depuis le dossier, sans requête au jeu
-      await ctx.route("**://s5.fourmizzz.fr/**", (route) => {
-        const chemin = new URL(route.request().url()).pathname;
-        if (/\/design7\.css$/.test(chemin))
-          return route.fulfill({
-            status: fs.existsSync(CSS_JEU) ? 200 : 404,
-            headers: { "content-type": "text/css" },
-            body: fs.existsSync(CSS_JEU) ? fs.readFileSync(CSS_JEU, "utf8") : "",
-          });
-        const f = fichierRequete(dossier, route.request().url()),
-          body = f ? fs.readFileSync(f, "utf8") : "";
-        return route.fulfill({
-          status: body ? 200 : 404,
-          headers: { "content-type": "text/html; charset=utf-8" },
-          body,
-        });
-      });
+      await ctx.route("**://s5.fourmizzz.fr/**", (route) => servir(route, dossier));
       await ctx.addInitScript((reglages) => {
         localStorage.setItem("outiiil_lastSeenVersion", "9.9.9");
+        // info-bulle du jeu ouverte quand la page a été enregistrée : absente d'une vraie page
+        document.addEventListener("DOMContentLoaded", () =>
+          document.querySelectorAll("[id^='ui-tooltip-']").forEach((e) => e.remove()),
+        );
         localStorage.setItem("fzzz_reglagesAlliance", reglages);
       }, REGLAGES_SIMULES);
       for (const p of PAGES) {

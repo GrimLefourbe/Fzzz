@@ -12,7 +12,7 @@
 const { chromium } = require("playwright");
 const fs = require("fs"),
   path = require("path"),
-  { fichierRequete } = require("./pages-enregistrees.cjs");
+  { servir } = require("./pages-enregistrees.cjs");
 
 const EXTENSION = path.join(__dirname, "..", ".output", "chrome-mv3"),
   [dossier, adresse = "Ressources.php"] = process.argv.slice(2);
@@ -39,8 +39,7 @@ const APPAREILS = {
     ["Chasse", "#o_toolbarItem2", "#o_boiteChasse"],
     ["Combat", "#o_toolbarItem3", "#o_boiteCombat"],
   ],
-  CAPTURES = path.join(dossier, "captures-boites"),
-  CSS_JEU = path.join(dossier, "design7.css");
+  CAPTURES = path.join(dossier, "captures-boites");
 fs.mkdirSync(CAPTURES, { recursive: true });
 
 // éléments visibles de la boîte qui dépassent de son bord droit ou de l'écran,
@@ -82,25 +81,14 @@ function depassements(selecteur) {
     const ctx = await chromium.launchPersistentContext("", {
       channel: "chromium",
       headless: true,
+      // un joueur en France : sans ça, l'horloge ajoute la ligne « Chez toi »
+      timezoneId: "Europe/Paris",
+      locale: "fr-FR",
       hasTouch: true,
       ...appareil,
       args: [`--disable-extensions-except=${EXTENSION}`, `--load-extension=${EXTENSION}`],
     });
-    await ctx.route("**://s5.fourmizzz.fr/**", (route) => {
-      const url = route.request().url();
-      if (/\/design7\.css$/.test(new URL(url).pathname))
-        return route.fulfill({
-          status: fs.existsSync(CSS_JEU) ? 200 : 404,
-          headers: { "content-type": "text/css" },
-          body: fs.existsSync(CSS_JEU) ? fs.readFileSync(CSS_JEU, "utf8") : "",
-        });
-      const f = fichierRequete(dossier, url);
-      return route.fulfill({
-        status: f ? 200 : 404,
-        headers: { "content-type": "text/html; charset=utf-8" },
-        body: f ? fs.readFileSync(f, "utf8") : "",
-      });
-    });
+    await ctx.route("**://s5.fourmizzz.fr/**", (route) => servir(route, dossier));
     await ctx.addInitScript(() => localStorage.setItem("outiiil_lastSeenVersion", "9.9.9"));
     const page = await ctx.newPage();
     await page.goto("http://s5.fourmizzz.fr/" + adresse);
@@ -108,6 +96,25 @@ function depassements(selecteur) {
     for (const [nomBoite, bouton, boite] of BOITES) {
       if (!(await page.$(bouton))) {
         console.log(`${nomAppareil} ${nomBoite} : bouton absent`);
+        continue;
+      }
+      // affichage mobile du jeu : ses encadrés (et celui de l'extension) ne
+      // s'affichent qu'après un appui sur la première icône du menu
+      const horsEcran = await page.$eval(
+        bouton,
+        (b) => b.getBoundingClientRect().bottom + scrollY < 0,
+      );
+      if (horsEcran && (await page.$("#boutonBoite"))) {
+        await page.click("#boutonBoite");
+        await page.waitForTimeout(500);
+      }
+      const visible = await page.$eval(bouton, (b) => {
+        const r = b.getBoundingClientRect();
+        return r.bottom + scrollY > 0 && r.right > 0 && r.left < innerWidth;
+      });
+      if (!visible) {
+        console.log(`${nomAppareil} ${nomBoite} : bouton hors de l'écran, même menu ouvert`);
+        total++;
         continue;
       }
       await page.click(bouton);
