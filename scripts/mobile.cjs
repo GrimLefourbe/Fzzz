@@ -8,13 +8,16 @@
  *   bun run build
  *   node scripts/mobile.cjs <dossier de pages du jeu> [page.php,…]
  *
- * Mettre aussi dans le dossier la feuille de style du jeu (design7.css) :
+ * Noms des fichiers : scripts/pages-enregistrees.cjs ; une page absente du
+ * dossier n'est pas vérifiée. Mettre aussi dans le dossier la feuille de style
+ * du jeu (design7.css) :
  * sans elle, la mise en page n'est pas celle du jeu. Chromium imite la taille,
  * le toucher et la page des téléphones, pas les moteurs de Safari et Firefox.
  */
 const { chromium } = require("playwright");
 const fs = require("fs"),
-  path = require("path");
+  path = require("path"),
+  { fichierRequete, pagesPresentes, PAGES_JEU } = require("./pages-enregistrees.cjs");
 
 const EXTENSION = path.join(__dirname, "..", ".output", "chrome-mv3"),
   [dossier, liste] = process.argv.slice(2);
@@ -22,10 +25,13 @@ if (!dossier) {
   console.error("usage : node scripts/mobile.cjs <dossier de pages du jeu> [pages]");
   process.exit(1);
 }
-const PAGES = (
-    liste ||
-    "messagerie.php,Armee.php,Ressources.php,laboratoire.php,construction.php,commerce.php,Membre.php?Pseudo=X,ennemie.php?Attaquer=1"
-  ).split(","),
+// vues de l'extension sur une page du jeu : Multi-flood opti, Carte, Stats membres
+const VUES = [
+    "ennemie.php#multiflood",
+    "alliance.php?Membres#carte",
+    "alliance.php?Membres#statsMembres",
+  ],
+  PAGES = pagesPresentes(dossier, liste ? liste.split(",") : [...PAGES_JEU, ...VUES]),
   ANDROID =
     "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36",
   IPHONE =
@@ -101,14 +107,8 @@ const REGLAGES_SIMULES = JSON.stringify({
             headers: { "content-type": "text/css" },
             body: fs.existsSync(CSS_JEU) ? fs.readFileSync(CSS_JEU, "utf8") : "",
           });
-        const f = path.join(
-            dossier,
-            chemin
-              .replace(/^\//, "")
-              .replace(/\.php$/i, "")
-              .toLowerCase() + ".html",
-          ),
-          body = !/^\/[^/]+$/.test(chemin) || !fs.existsSync(f) ? "" : fs.readFileSync(f, "utf8");
+        const f = fichierRequete(dossier, route.request().url()),
+          body = f ? fs.readFileSync(f, "utf8") : "";
         return route.fulfill({
           status: body ? 200 : 404,
           headers: { "content-type": "text/html; charset=utf-8" },

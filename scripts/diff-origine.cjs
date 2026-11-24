@@ -6,13 +6,14 @@
  *   bun run build
  *   node scripts/diff-origine.cjs <dossier de pages du jeu> [page.php,…]
  *
- * Le dossier contient des pages enregistrées du jeu (armee.html,
- * messagerie.html…, nom de la page en minuscules) : elles ne sont pas dans le
- * dépôt (données de joueurs). Chromium et Playwright doivent être installés.
+ * Le dossier contient des pages enregistrées du jeu (noms :
+ * scripts/pages-enregistrees.cjs) : elles ne sont pas dans le dépôt (données
+ * de joueurs). Chromium et Playwright doivent être installés.
  */
 const { chromium } = require("playwright");
 const fs = require("fs"),
-  path = require("path");
+  path = require("path"),
+  { fichierRequete, pagesPresentes, PAGES_JEU } = require("./pages-enregistrees.cjs");
 
 const EXTENSION = path.join(__dirname, "..", ".output", "chrome-mv3"),
   [dossier, liste] = process.argv.slice(2);
@@ -20,10 +21,7 @@ if (!dossier) {
   console.error("usage : node scripts/diff-origine.cjs <dossier de pages du jeu> [pages]");
   process.exit(1);
 }
-const PAGES = (
-    liste ||
-    "messagerie.php,Armee.php,Ressources.php,laboratoire.php,construction.php,commerce.php,Membre.php?Pseudo=X,ennemie.php?Attaquer=1"
-  ).split(","),
+const PAGES = pagesPresentes(dossier, liste ? liste.split(",") : PAGES_JEU),
   ONGLETS = [
     "General",
     "Ressources",
@@ -132,12 +130,8 @@ const REGLAGES_SIMULES = JSON.stringify({
     });
     // pages servies depuis le dossier, sans requête au jeu
     await ctx.route("**://s5.fourmizzz.fr/**", (route) => {
-      const nom = new URL(route.request().url()).pathname
-          .replace(/^\//, "")
-          .replace(/\.php$/i, "")
-          .toLowerCase(),
-        f = path.join(dossier, nom + ".html"),
-        body = fs.existsSync(f) ? fs.readFileSync(f, "utf8") : "";
+      const f = fichierRequete(dossier, route.request().url()),
+        body = f ? fs.readFileSync(f, "utf8") : "";
       return route.fulfill({
         status: body ? 200 : 404,
         headers: { "content-type": "text/html; charset=utf-8" },
